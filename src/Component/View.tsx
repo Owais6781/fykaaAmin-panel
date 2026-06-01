@@ -41,7 +41,7 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 
-import { useGetViewQuery } from "../api/fechingapi";
+import { useGetViewQuery } from "../api/product";
 
 type ProductFromApi = {
   _id: string;

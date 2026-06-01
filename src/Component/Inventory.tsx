@@ -443,7 +443,7 @@ import {
     // Clock,
     // Zap,
 } from "lucide-react";
-import { useGetProductsQuery, useDeleteProductMutation } from "../api/fechingapi";
+import { useGetProductsQuery, useDeleteProductMutation } from "../api/product";
 import { useNavigate } from "react-router-dom";
 
 const Inventory = () => {
@@ -607,7 +607,7 @@ const Inventory = () => {
 
                         {/* Add Product */}
                         <button
-                            onClick={() => navigate("/form")}
+                            onClick={() => navigate("/dashboard/form")}
                             className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white rounded-xl font-semibold shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 hover:-translate-y-0.5 transition-all"
                         >
                             <Plus size={20} />
@@ -716,9 +716,9 @@ const Inventory = () => {
                 {/* Quick Actions */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     {[
-                        { icon: Plus, label: "Add Product", color: "from-purple-500 to-fuchsia-600", action: () => navigate("/form") },
-                        { icon: Download, label: "Export Data", color: "from-blue-500 to-cyan-600", action: () => { } },
-                        { icon: BarChart3, label: "Analytics", color: "from-emerald-500 to-green-600", action: () => { } },
+                        { icon: Plus, label: "Add Product", color: "from-purple-500 to-fuchsia-600", action: () => navigate("/dashboard/form") },
+                        { icon: Download, label: "Export Data", color: "from-blue-500 to-cyan-600", action: () => {navigate("/dashboard/exportExcelOrder")  } },
+                         { icon: BarChart3, label: "Analytics", color: "from-emerald-500 to-green-600", action: () => {navigate("/dashboard/graphChart")  } },
                         { icon: Settings, label: "Settings", color: "from-gray-600 to-gray-700", action: () => { } },
                     ].map((item, index) => (
                         <button
@@ -857,7 +857,7 @@ const Inventory = () => {
                                                         <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-fuchsia-100 rounded-xl flex items-center justify-center overflow-hidden">
                                                             {product.images?.[0] ? (
                                                                 <img
-                                                                    // src={product.images[0]} 
+                                                                  
                                                                     src={ImageByIndexUrl(product._id, 0)}
                                                                     alt={product.title}
                                                                     className="w-full h-full object-cover"
@@ -932,14 +932,14 @@ const Inventory = () => {
 
                                                     >
                                                         <button
-                                                            onClick={() => navigate(`/view/${product._id}`)}
+                                                            onClick={() => navigate(`/dashboard/view/${product._id}`)}
                                                             className="p-2.5 hover:bg-blue-100 rounded-xl transition-all"
                                                             title="View"
                                                         >
                                                             <Eye size={18} className="text-blue-600" />
                                                         </button>
                                                         <button
-                                                            onClick={() => navigate(`/edit/${product._id}`)}
+                                                            onClick={() => navigate(`/dashboard/edit/${product._id}`)}
                                                             className="p-2.5 hover:bg-emerald-100 rounded-xl transition-all"
                                                             title="Edit"
                                                         >
@@ -1002,13 +1002,13 @@ const Inventory = () => {
                                             {/* Quick Actions */}
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                                 <button
-                                                    onClick={() => navigate(`/view/${product._id}`)}
+                                                    onClick={() => navigate(`/dashboard/view/${product._id}`)}
                                                     className="p-3 bg-white rounded-xl hover:scale-110 transition-transform"
                                                 >
                                                     <Eye size={20} className="text-gray-700" />
                                                 </button>
                                                 <button
-                                                    onClick={() => navigate(`/edit/${product._id}`)}
+                                                    onClick={() => navigate(`/dashboard/edit/${product._id}`)}
                                                     className="p-3 bg-white rounded-xl hover:scale-110 transition-transform"
                                                 >
                                                     <Edit size={20} className="text-gray-700" />

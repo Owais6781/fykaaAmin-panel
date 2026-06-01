@@ -1,96 +1,45 @@
 
-import {  HashRouter, Route, Routes, useLocation } from 'react-router-dom';
-import './App.css';
-import AdminLayout from "./Component/Admin/sidebard";
-import Dashbord from './Component/Dashbord';
-import Form from "./Component/Form"
-import SellerRegister from './Component/userRegistation/Registation';
-import { Provider } from 'react-redux';
-import {store} from "./app/store"
-import Login from './Component/userRegistation/Login';
-import ViewProduct from './Component/View';
-import Edit from './Component/Update';
-import Inventory from './Component/Inventory';
-
-
-const AppLayout = () => {
-  const location = useLocation();
-  const state = location.state && location.state.background;
-
-  return (
-    <div className='layout'>
-     <AdminLayout/>
-      <div className='content'>
-        <Routes location={state || location}>
-          <Route path='/' element={<Dashbord />} />
-          <Route path='/inventory' element={<Inventory/>} />
-          <Route path='/form' element={<Form/>}/>
-          <Route path='/view/:id' element={<ViewProduct/>}/>
-          <Route  path='/edit/:id' element={<Edit/>}/>
-          <Route path='/sellerRegister' element={<SellerRegister/>}/>
-          <Route path='/login' element={<Login/>}/>
-        </Routes>
-      </div>
-    </div>
-  );
-
-
-    
-};
-
-const App = () => (
-  <Provider store={store}>
-    <HashRouter>
-      <AppLayout />
-    </HashRouter>
-  </Provider>
-);
-
-export default App;
-
-
-
-// import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
-// import { Provider } from "react-redux";
-// import { store } from "./app/store";
-
+// import {  HashRouter, Route, Routes, useLocation } from 'react-router-dom';
+// import { Toaster } from "sonner";
+// import './App.css';
 // import AdminLayout from "./Component/Admin/sidebard";
-// import Dashbord from "./Component/Dashbord";
-// import Form from "./Component/Form";
-// import SellerRegister from "./Component/userRegistation/Registation";
-// import Login from "./Component/userRegistation/Login";
+// import Dashbord from './Component/Dashbord';
+// import Form from "./Component/Form"
+// import Register from './Component/userRegistation/Registation';
+// import { Provider } from 'react-redux';
+// import {store} from "./app/store"
+// import Login from './Component/userRegistation/Login';
+// import ViewProduct from './Component/View';
+// import Edit from './Component/Update';
+// import Inventory from './Component/Inventory';
+// import OrdeList from './Component/Orderlist';
 
-// // Simple Auth Check
-// const RequireAuth = ({ children }) => {
-//   const token = localStorage.getItem("token");
-//   if (!token) return <Navigate to="/login" replace />;
-//   return children;
-// };
 
 // const AppLayout = () => {
+//   const location = useLocation();
+//   const state = location.state && location.state.background;
+
 //   return (
-//     <Routes>
-//       {/* Login always accessible */}
-//       <Route path="/login" element={<Login />} />
-
-//       {/* Protected Admin Routes */}
-//       <Route
-//         path="/*"
-//         element={
-//           <RequireAuth>
-//             <AdminLayout />
-//           </RequireAuth>
-//         }
-//       >
-//         <Route index element={<Dashbord />} />
-//         <Route path="products" element={<Form />} />
-//         <Route path="sellerRegister" element={<SellerRegister />} />
-//       </Route>
-
-//       {/* Redirect unknown paths to login */}
-//       <Route path="*" element={<Navigate to="/login" />} />
-//     </Routes>
+//     <div className='layout'>
+//     <Toaster position="top-right" richColors closeButton />
+//      <AdminLayout/>
+//       <div className='content'>
+//         <Routes location={state || location}>
+//           <Route path='/' element={<Dashbord />} />
+//           <Route path='/order-list' element={<OrdeList/>} />
+//           <Route path='/inventory' element={<Inventory/>} />
+//           <Route path='/form' element={<Form/>}/>
+//           <Route path='/view/:id' element={<ViewProduct/>}/>
+//           <Route  path='/edit/:id' element={<Edit/>}/>
+//           <Route path='/register' element={<Register/>}/>
+//           <Route path='/login' element={<Login/>}/>
+//         </Routes>
+//       </div>
+//     </div>
 //   );
+
+
+
 // };
 
 // const App = () => (
@@ -102,3 +51,188 @@ export default App;
 // );
 
 // export default App;
+
+
+
+
+
+
+// import { HashRouter, Route, Routes, Navigate, Outlet } from "react-router-dom";
+// import { Toaster } from "sonner";
+// import { isLogin } from "./utils/auth";
+// import "./App.css";
+
+// import AdminLayout from "./Component/Admin/sidebard";
+// import Dashbord from "./Component/Dashbord";
+// import Form from "./Component/Form";
+// import Register from "./Component/userRegistation/Registation";
+// import Login from "./Component/userRegistation/Login";
+// import ViewProduct from "./Component/View";
+// import Edit from "./Component/Update";
+// import Inventory from "./Component/Inventory";
+// // import OrdeList from "./Component/Orderlist";
+
+// import { Provider } from "react-redux";
+// import { store } from "./app/store";
+
+// const ProtectedRoute = () => {
+
+
+//   if (isLogin()) {
+//     return <Navigate to="/login" replace />;
+//   }
+//   return <Outlet />;
+// };
+
+// const PublicRoute = () => {
+
+
+//     if (!isLogin()) {
+//     return <Navigate to="/dashboard" replace />;
+//   }
+//   return <Outlet />;
+// };
+
+// const AdminPanelLayout = () => {
+//   return (
+//     <div className="layout">
+//       <AdminLayout />
+
+//       <div className="content">
+//         <Outlet />
+//       </div>
+//     </div>
+//   );
+// };
+
+// const App = () => {
+//   return (
+//     <Provider store={store}>
+//       <HashRouter>
+//         <Toaster position="top-right" richColors closeButton />
+
+//         <Routes>
+//           {/* Public Routes: bina login ke sirf ye pages */}
+//           <Route element={<PublicRoute />}>
+//             <Route path="/login" element={<Login />} />
+//             <Route path="/register" element={<Register />} />
+//           </Route>
+
+//           {/* Protected Admin Panel */}
+//           <Route element={<ProtectedRoute />}>
+//             <Route element={<AdminPanelLayout />}>
+//               <Route path="/" element={<Dashbord />} />
+//               {/* <Route path="/order-list" element={<OrdeList />} /> */}
+//               <Route path="/inventory" element={<Inventory />} />
+//               <Route path="/form" element={<Form />} />
+//               <Route path="/view/:id" element={<ViewProduct />} />
+//               <Route path="/edit/:id" element={<Edit />} />
+//             </Route>
+//           </Route>
+
+// <Route
+//   path="*"
+//   element={
+//     localStorage.getItem("token") ? (
+//       <Navigate to="/" replace />
+//     ) : (
+//       <Navigate to="/login" replace />
+//     )
+//   }
+// />
+//         </Routes>
+//       </HashRouter>
+//     </Provider>
+//   );
+// };
+
+// export default App;
+
+
+
+
+import { HashRouter, Route, Routes, Navigate, Outlet } from "react-router-dom";
+import { Toaster } from "sonner";
+import { Provider } from "react-redux";
+
+import { store } from "./app/store";
+import { isLogin } from "./utils/auth";
+import "./App.css";
+
+import AdminLayout from "./Component/Admin/sidebard";
+import Dashbord from "./Component/Dashbord";
+import Form from "./Component/Form";
+import Register from "./Component/userRegistation/Registation";
+import Login from "./Component/userRegistation/Login";
+import ViewProduct from "./Component/View";
+import Edit from "./Component/Update";
+import Inventory from "./Component/Inventory";
+import OrdeList from "./Component/Orderlist";
+import ExportOrdersExcel from "./Component/ExcelDownload/ExcelToDownload";
+import GraphCharts from "./Component/GraphAnalytics/GrapChart";
+
+const ProtectedRoute = () => {
+  if (!isLogin()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
+};
+
+const PublicRoute = () => {
+  if (isLogin()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
+};
+
+const App = () => {
+  return (
+    <Provider store={store}>
+      <HashRouter>
+        <Toaster position="top-right" richColors closeButton />
+
+        <Routes>
+          {/* Default */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+          {/* Public Routes */}
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Route>
+
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<AdminLayout />}>
+              <Route index element={<Dashbord />} />
+              <Route path="inventory" element={<Inventory />} />
+              <Route path="order-list" element={<OrdeList />} />
+              <Route path="form" element={<Form />} />
+              <Route path="view/:id" element={<ViewProduct />} />
+              <Route path="edit/:id" element={<Edit />} />
+              <Route path="register" element={<Register />} />
+              <Route path="exportExcelOrder" element={<ExportOrdersExcel />} />
+              <Route path="graphChart" element={<GraphCharts />} />
+            </Route>
+          </Route>
+
+          {/* Wrong URL */}
+          <Route
+            path="*"
+            element={
+              isLogin() ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+        </Routes>
+      </HashRouter>
+    </Provider>
+  );
+};
+
+export default App;

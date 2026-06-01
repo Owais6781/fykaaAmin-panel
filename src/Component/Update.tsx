@@ -3251,7 +3251,7 @@ import {
   useGetViewQuery,
   useUpdateProductMutation,
   useDeleteProductMutation,
-} from "../api/fechingapi";
+} from "../api/product"
 import {
   Package,
   FileText,
