@@ -20,14 +20,14 @@ import {
   XCircle,
   ClipboardList,
   BadgeCheck,
-  Bell,
+  Package,
+  RotateCcw,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
 
   useUpdateOrderStatusMutation,
   useGetMyOrdersQuery
-  // useGetAllOrdersQuery
 } from "../api/orderApi";
 
 
@@ -60,6 +60,7 @@ type Order = {
   _id: string;
   orderId?: string;
   transactionId?: string;
+  // category: string;
   orderStatus: string;
   paymentStatus: string;
   totalAmount?: number;
@@ -94,51 +95,24 @@ export default function OrderList() {
     refetchOnReconnect: true,
   })
 
-  const [updateOrderStatus, { isLoading: isUpdating }] =
-    useUpdateOrderStatusMutation();
-
-
+  const [updateOrderStatus, { isLoading: isUpdating }] =  useUpdateOrderStatusMutation();
+  
 
   const orders: Order[] = Array.isArray(data) ? data : [];
 
 
-  console.log(orders)
-
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [open, setOpen] = useState(false);
-  const [newOrderBubble, setNewOrderBubble] = useState(0);
+ 
   const prevOrderCountRef = useRef(0);
 
-  //   useEffect(() => {
-  //     if (!orders.length) {
-  //       prevOrderCountRef.current = 0;
-  //       return;
-  //     }
-
-  //     if (
-  //       prevOrderCountRef.current > 0 &&
-  //       orders.length > prevOrderCountRef.current
-  //     ) {
-  //       const newOrdersCount = orders.length - prevOrderCountRef.current;
-  //       toast.success("New Order Received", {
-  //         description: `${newOrdersCount} new order${
-  //           newOrdersCount > 1 ? "s" : ""
-  //         } arrived`,
-  //       });
-  //     }
-
-  //     prevOrderCountRef.current = orders.length;
-  //   }, [orders]);
-
-
-  const pendingCount = orders.filter(
-    (o) => o.orderStatus === "Pending"
-  ).length;
+ 
+ 
 
   useEffect(() => {
     if (!orders.length) {
       prevOrderCountRef.current = 0;
-      setNewOrderBubble(0);
+     
       return;
     }
 
@@ -148,7 +122,7 @@ export default function OrderList() {
     ) {
       const newOrdersCount = orders.length - prevOrderCountRef.current;
 
-      setNewOrderBubble((prev) => prev + newOrdersCount);
+     
 
       toast.success("New Order Received", {
         description: `${newOrdersCount} new order${newOrdersCount > 1 ? "s" : ""
@@ -246,6 +220,7 @@ export default function OrderList() {
       shipped: orders.filter((o) => o.orderStatus === "Shipped").length,
       delivered: orders.filter((o) => o.orderStatus === "Delivered").length,
       cancelled: orders.filter((o) => o.orderStatus === "Cancelled").length,
+      returned: orders.filter((o) => o.orderStatus === "Returned").length,
     };
   }, [orders]);
 
@@ -322,6 +297,16 @@ export default function OrderList() {
         customBodyRenderLite: (dataIndex: number) => {
           const order = orders[dataIndex];
           return order?.userInfo?.fullName || "N/A";
+        },
+      },
+    },
+     {
+      name: "Product",
+      label: "Product",
+      options: {
+        customBodyRenderLite: (dataIndex: number) => {
+          const order = orders[dataIndex];
+         return order?.items?.[0]?.category || "N/A";
         },
       },
     },
@@ -436,7 +421,22 @@ export default function OrderList() {
     elevation: 0,
   };
 
-  if (isLoading) return <p className="ml-64 p-4">Loading...</p>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600 mx-auto"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Package size={28} className="text-purple-600" />
+            </div>
+          </div>
+          <p className="mt-6 text-gray-600 font-medium">Loading OrderBook...</p>
+          <p className="text-sm text-gray-400 mt-1">Please wait while we fetch your data</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isError) {
     return <p className="ml-64 p-4 text-red-500">Error loading orders</p>;
@@ -483,42 +483,10 @@ export default function OrderList() {
   );
 
   return (
-    <div className="ml-64 min-h-screen bg-gray-50 p-4">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
-            Order Dashboard
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Orders auto refresh every 5 seconds
-          </p>
-        </div>
+    <div className=" min-h-screen  p-4">
 
-
-        <button
-          className={`relative inline-flex items-center justify-center w-12 h-12 rounded-full shadow border transition
-      ${pendingCount > 0
-              ? "bg-red-100 border-red-300"
-              : "bg-white border-gray-200 hover:bg-gray-50"}
-  `}
-        >
-          <Bell
-            className={`w-6 h-6 ${pendingCount > 0 ? "text-red-600" : "text-slate-700"
-              }`}
-          />
-
-
-          
-
-          {pendingCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
-              {pendingCount}
-            </span>
-          )}
-        </button>
-      </div>
       {/* Top Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7 gap-4 mb-6 p-6">
         <StatCard
           title="Total Orders"
           value={stats.total}
@@ -581,19 +549,19 @@ export default function OrderList() {
           lineColor="bg-red-500"
           badge="Stopped"
         />
-        {/* <StatCard
-          title="Cancelled"
-          value={stats.cancelled}
-          icon={<XCircle size={28} />}
-          iconBg="bg-gradient-to-br from-red-500 to-rose-500"
-          lineColor="bg-red-500"
-          badge="Stopped"
-        /> */}
+        <StatCard
+          title="Retuned "
+          value={stats.returned}
+          icon={<RotateCcw size={28} />}
+          iconBg="bg-gradient-to-br from-yellow-400 to-amber-500"
+          lineColor="bg-amber-500"
+          badge="Retun"
+        />
       </div>
 
       {/* Table */}
-      {/* <div className="bg-white rounded-xl shadow p-4 min-w-0"> */}
-      <div className="w-full max-w-full bg-white rounded-xl shadow p-2 sm:p-4 overflow-hidden">
+      
+      <div className="w-full  max-w-full bg-white rounded-xl shadow p-6 sm:p-4 overflow-hidden">
         <MUIDataTable
           title={"Order Management"}
           data={orders}

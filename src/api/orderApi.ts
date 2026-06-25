@@ -64,13 +64,8 @@ export const orderApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: `${Api}/api`,
     credentials: "include",
-    prepareHeaders: (headers, ) => {
-       const token = localStorage.getItem("token");
-
-      // const token = (getState() as any)?.auth?.token;
-
-
-
+    prepareHeaders: (headers,) => {
+      const token = localStorage.getItem("token");
       if (token) {
         headers.set("authorization", `Bearer ${token}`);
       }
@@ -106,10 +101,6 @@ export const orderApi = createApi({
     }),
 
 
-    // getMyOrders: builder.query<{ success: boolean; orders: Order[] }, void>({
-    //   query: () => "/my-orders",
-    //   providesTags: ["Orders"],
-    // }),
 
 
     getMyOrders: builder.query<{ success: boolean; orders: Order[] }, void>({
@@ -120,6 +111,30 @@ export const orderApi = createApi({
     }),
 
 
+
+    getSingleUserOrder: builder.query({
+      query: () => ({
+        url: "/single-user-orders",
+        method: "GET",
+      }),
+      providesTags: ["Orders"],
+    }),
+// this  url is single user+order feching  show on table
+      getUserOrders: builder.query({
+      query: (userId) => `/user-orders/${userId}`,
+    }),
+
+
+    getProductImages: builder.query<Blob, { id: string, index: number }>({
+      query: ({ id, index }) => ({
+        url: `${id}/img/${index}`,
+        method: "GET",
+        responseHandler: async (response) => response.blob
+
+      })
+    })
+
+
   }),
 });
 
@@ -128,7 +143,10 @@ export const orderApi = createApi({
 
 export const {
   useCreateOrderMutation,
- useGetMyOrdersQuery,
+  useGetProductImagesQuery,
+  useGetMyOrdersQuery,
+  useGetSingleUserOrderQuery,
+  useGetUserOrdersQuery,
   useUpdateOrderStatusMutation
 } = orderApi;
 

@@ -1,216 +1,8 @@
 
-// import {
-//     LineChart,
-//     Line,
-//     XAxis,
-//     YAxis,
-//     CartesianGrid,
-//     Tooltip,
-//     ResponsiveContainer,
-//     PieChart,
-//     Pie,
-//     Cell,
-//     Legend,
-//     BarChart,
-//     Bar,
-// } from "recharts";
-// type Order = {
-//     _id: string;
-//     orderId?: string;
-//     orderStatus: string;
-//     paymentStatus: string;
-//     totalAmount?: number;
-//     createdAt?: string;
-// };
-
-
-// import {
-//     Package,
-// } from "lucide-react";
-
-// // type GetMyOrdersResponse = {
-// //     success?: boolean;
-// //     orders: Order[];
-// // };
-
-
-// import {
-//     useGetMyOrdersQuery
-// } from "../api/orderApi";
-
-// const STATUS_COLORS: Record<string, string> = {
-//     Pending: "#facc15",     // yellow
-//     Confirmed: "#3b82f6",   // blue
-//     Processing: "#8b5cf6",  // purple
-//     Shipped: "#6366f1",     // indigo
-//     Delivered: "#22c55e",   // green
-//     Cancelled: "#ef4444",   // red
-// };
-// const PAYMENT_STATUS_COLORS: Record<string, string> = {
-//     Paid: "#22c55e",      // green
-//     Pending: "#facc15",   // yellow
-//     Failed: "#ef4444",    // red
-// };
-
-
-
-// export default function Dashboard() {
-
-
-
-//     const { data, isLoading, isError } = useGetMyOrdersQuery()
-
-//     console.log("FULL RESULT:", data);
-//     console.log("DATA:", data);
-//     console.log("ERROR:", data);
-//     console.log("STATUS:", data);
-
-
-//     const orders: Order[] = Array.isArray(data) ? data : [];
-
-
-
-//     console.log('RAW DATA:', data); // 👈 ye console me dekho
-//     console.log(orders)
-
-
-//     const revenueDataMap: Record<string, number> = {};
-//     const orderStatusMap: Record<string, number> = {};
-//     const paymentStatusMap: Record<string, number> = {};
-
-//     orders.forEach((order: Order) => {
-//         const date = order?.createdAt
-//             ? new Date(order.createdAt).toLocaleDateString("en-IN", {
-//                 day: "2-digit",
-//                 month: "short",
-//             })
-//             : "N/A";
-
-//         revenueDataMap[date] = (revenueDataMap[date] || 0) + (order.totalAmount || 0);
-//         orderStatusMap[order.orderStatus] = (orderStatusMap[order.orderStatus] || 0) + 1;
-//         paymentStatusMap[order.paymentStatus] = (paymentStatusMap[order.paymentStatus] || 0) + 1;
-//     });
-
-//     const revenueData = Object.keys(revenueDataMap).map((date) => ({
-//         date,
-//         revenue: revenueDataMap[date],
-//     }));
-
-//     const orderStatusData = Object.keys(orderStatusMap).map((status) => ({
-//         name: status,
-//         value: orderStatusMap[status],
-//     }));
-
-//     const paymentStatusData = Object.keys(paymentStatusMap).map((status) => ({
-//         name: status,
-//         count: paymentStatusMap[status],
-//     }));
-
-//     if (isLoading) {
-//         return (
-//             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <div className="relative">
-//                         <div className="w-20 h-20 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600 mx-auto"></div>
-//                         <div className="absolute inset-0 flex items-center justify-center">
-//                             <Package size={28} className="text-purple-600" />
-//                         </div>
-//                     </div>
-//                     <p className="mt-6 text-gray-600 font-medium">Loading Deshboard...</p>
-//                     <p className="text-sm text-gray-400 mt-1">Please wait while we fetch your data</p>
-//                 </div>
-//             </div>
-//         );
-//     }
-
-//     if (isError) {
-//         return <div className="p-6 ml-64 text-red-500">Failed to load charts</div>;
-//     }
-
-//     return (
-//         <div className="p-6 bg-gray-100 min-h-screen">
-//             <h1 className="text-2xl font-bold mb-6">Order Dashboard</h1>
-
-//             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-//                 {/* Revenue Chart */}
-//                 <div className="bg-white rounded-2xl shadow p-5">
-//                     <h2 className="text-lg font-semibold mb-4">Revenue Overview</h2>
-//                     <ResponsiveContainer width="100%" height={300}>
-//                         <LineChart data={revenueData}>
-//                             <CartesianGrid strokeDasharray="3 3" />
-//                             <XAxis dataKey="date" />
-//                             <YAxis />
-//                             <Tooltip />
-//                             <Line type="monotone" dataKey="revenue" strokeWidth={3} />
-//                         </LineChart>
-//                     </ResponsiveContainer>
-//                 </div>
-
-//                 {/* Order Status Pie Chart */}
-//                 <div className="bg-white rounded-2xl shadow p-5">
-//                     <h2 className="text-lg font-semibold mb-4">Order Status</h2>
-//                     <ResponsiveContainer width="100%" height={300}>
-//                         <PieChart>
-//                             <Pie
-//                                 data={orderStatusData}
-//                                 cx="50%"
-//                                 cy="50%"
-//                                 outerRadius={100}
-//                                 dataKey="value"
-//                                 label
-//                             >
-//                                 {orderStatusData.map((entry: any, index: number) => (
-//                                     //   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-//                                     <Cell
-//                                         key={`cell-${index}`}
-//                                         fill={STATUS_COLORS[entry.name] || "#9ca3af"} // fallback gray
-//                                     />
-//                                 ))}
-//                             </Pie>
-//                             <Tooltip />
-//                             <Legend />
-//                         </PieChart>
-//                     </ResponsiveContainer>
-//                 </div>
-
-//                 {/* Payment Status Bar Chart */}
-//                 <div className="bg-white rounded-2xl shadow p-5 lg:col-span-2">
-//                     <h2 className="text-lg font-semibold mb-4">Payment Status</h2>
-//                     <ResponsiveContainer width="100%" height={300}>
-//                         <BarChart data={paymentStatusData}>
-//                             <CartesianGrid strokeDasharray="3 3" />
-//                             <XAxis dataKey="name" />
-//                             <YAxis />
-//                             <Tooltip />
-//                             <Legend />
-//                             <Bar dataKey="count">
-//                                 {paymentStatusData.map((entry: any, index: number) => (
-//                                     // <Cell
-//                                     //     key={`cell-${index}`}
-//                                     //     fill={PAYMENT_COLORS[index % PAYMENT_COLORS.length]}
-//                                     // />
-//                                     <Cell
-//                                         key={`cell-${index}`}
-//                                         fill={PAYMENT_STATUS_COLORS[entry.name] || "#9ca3af"}
-//                                     />
-//                                 ))}
-//                             </Bar>
-//                         </BarChart>
-//                     </ResponsiveContainer>
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// }
-
-
-
-
-
 
 import {
     ResponsiveContainer,
-   
+  
     XAxis,
     YAxis,
     CartesianGrid,
@@ -218,27 +10,27 @@ import {
     PieChart,
     Pie,
     Cell,
- 
+
     AreaChart,
     Area,
 } from "recharts";
 
 import {
-  
+
     DollarSign,
     ShoppingBag,
     Users,
     Package,
     Store,
-  
+   
     ChevronDown,
     Calendar,
     MoreHorizontal,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useGetMyOrdersQuery } from "../api/orderApi";
-import { useGetAllCustomersQuery } from "../api/customerApi";
-import { useGetProductsQuery, } from "../api/product";
+import { useGetMyOrdersQuery } from "../../api/orderApi";
+import { useGetAllCustomersQuery } from "../../api/customerApi";
+import { useGetProductsQuery, } from "../../api/product";
 import React from "react";
 
 
@@ -323,9 +115,9 @@ const sparkData = {
 //     );
 // }
 
-export default function Dashboard() {
+export default function Test() {
     const navigate = useNavigate()
-    const Api = import.meta.env.VITE_API_URL as string;
+     const Api = import.meta.env.VITE_API_URL as string;
 
     const [range, setRange] = React.useState<"month" | "lastMonth" | "year">("month");
 
@@ -440,18 +232,13 @@ export default function Dashboard() {
 
 
 
-    const productMap: Record<string, {
-        name: string;
-        sales: number;
-        revenue: number;
-        image?: string
-    }> = {};
-
-
-
+    const productMap: Record<
+        string,
+        { name: string; sales: number; revenue: number; image?: string }
+    > = {};
 
     orders.forEach((order) => {
-        order.items?.forEach((item:any) => {
+        order.items?.forEach((item: any) => {
             const name = item.title || "Unknown Product";
 
             if (!productMap[name]) {
@@ -468,14 +255,12 @@ export default function Dashboard() {
         });
     });
 
-     console.log("Img",productMap)
 
     const topProducts = Object.values(productMap)
         .sort((a, b) => b.sales - a.sales)
         .slice(0, 5);
 
-
-
+ 
 
     const today = new Date();
 
@@ -503,35 +288,16 @@ export default function Dashboard() {
             </div>
         );
 
-
-        if (isError)
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4">
-      <div className="text-center">
-        <div className="text-6xl mb-4">📡</div>
-
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          No Internet Connection
-        </h2>
-
-        <p className="text-slate-500 mb-6">
-          Please check your network and try again.
-        </p>
-
-        <button
-          onClick={() => window.location.reload()}
-          className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-        >
-          Retry
-        </button>
-      </div>
-    </div>
-  );
- 
+    if (isError)
+        return (
+            <div className="min-h-screen flex items-center justify-center text-red-500">
+                Failed to load dashboard
+            </div>
+        );
 
     return (
-        <div className="min-h-screen  font-sans">
-
+        <div className="min-h-screen bg-[#f5f6fa] font-sans">
+     
             <div className="p-6 space-y-5">
                 {/* ── Date Range ── */}
                 <div className="flex justify-end">
@@ -713,10 +479,11 @@ export default function Dashboard() {
                                 <div key={i} className="flex items-center gap-3">
                                     <span className="text-xs text-slate-400 w-4 shrink-0">{i + 1}</span>
                                     <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-base shrink-0">
-                                      
-                                        {p.image?.[0] ? (
+                                        {/* {["🎧", "⌚", "👟", "💻", "🎒"][i]} */}
+                                        {p.image ? (
                                             <img
-                                                 src={`${Api}/api/image/${p.image}`}
+                                                src={`${Api}/${p.image}`}
+                                               
                                                 alt={p.name}
                                                 className="w-full h-full object-cover"
                                             />
@@ -924,8 +691,3 @@ function StatCard({
         </div>
     );
 }
-
-
-
-
-

@@ -170,6 +170,9 @@ import Inventory from "./Component/Inventory";
 import OrdeList from "./Component/Orderlist";
 import ExportOrdersExcel from "./Component/ExcelDownload/ExcelToDownload";
 import GraphCharts from "./Component/GraphAnalytics/GrapChart";
+import Customer from "./Component/CustomerInfo/Customer";
+import ProfileView from "./Component/CustomerInfo/ProfileView";
+import Test from "./Component/userRegistation/Test";
 
 const ProtectedRoute = () => {
   if (!isLogin()) {
@@ -209,12 +212,15 @@ const App = () => {
               <Route index element={<Dashbord />} />
               <Route path="inventory" element={<Inventory />} />
               <Route path="order-list" element={<OrdeList />} />
+              <Route path="customer-list" element={<Customer />} />
+              <Route path="Profile-View/:id" element={<ProfileView />} />
               <Route path="form" element={<Form />} />
               <Route path="view/:id" element={<ViewProduct />} />
               <Route path="edit/:id" element={<Edit />} />
               <Route path="register" element={<Register />} />
               <Route path="exportExcelOrder" element={<ExportOrdersExcel />} />
               <Route path="graphChart" element={<GraphCharts />} />
+              <Route path="Test" element={<Test />} />
             </Route>
           </Route>
 

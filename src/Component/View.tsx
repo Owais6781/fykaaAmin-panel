@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 import React, {  useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -34,7 +28,6 @@ import {
   RefreshCw,
   Download,
   Printer,
-  Link2,
   QrCode,
   History,
   ArrowUpRight,
@@ -179,7 +172,7 @@ const ViewProduct: React.FC = () => {
   // Loading State
   if (!id) {
     return (
-      <div className="min-h-screen ml-64 flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen  flex items-center justify-center bg-slate-50">
         <div className="text-center bg-white p-10 rounded-2xl shadow-xl max-w-md">
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-red-100 flex items-center justify-center">
             <AlertCircle size={40} className="text-red-500" />
@@ -199,7 +192,7 @@ const ViewProduct: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen ml-64 flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen stickey  flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <div className="relative w-20 h-20 mx-auto mb-6">
             <div className="absolute inset-0 rounded-full border-4 border-slate-200"></div>
@@ -304,11 +297,12 @@ const ViewProduct: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen ml-64 bg-slate-50">
+     <div className="min-h-screen  bg-slate-50  overflow-hidden">
+  
       <ImageZoomModal />
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
+      <header className=" bg-white border-b border-slate-200 overflow-hidden">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Left Side */}
@@ -710,59 +704,6 @@ const ViewProduct: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <div className="p-5 border-b border-slate-100">
-                  <h3 className="font-semibold text-slate-800">Quick Actions</h3>
-                </div>
-                <div className="p-3 space-y-1">
-                  <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-50 transition-colors text-slate-700">
-                    <Edit3 size={18} className="text-slate-400" />
-                    <span className="text-sm font-medium">Edit Product</span>
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-50 transition-colors text-slate-700">
-                    <Copy size={18} className="text-slate-400" />
-                    <span className="text-sm font-medium">Duplicate Product</span>
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-50 transition-colors text-slate-700">
-                    <ExternalLink size={18} className="text-slate-400" />
-                    <span className="text-sm font-medium">View on Store</span>
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-50 transition-colors text-slate-700">
-                    <Link2 size={18} className="text-slate-400" />
-                    <span className="text-sm font-medium">Copy Link</span>
-                  </button>
-                  <hr className="my-2" />
-                  <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 transition-colors text-red-600">
-                    <Trash2 size={18} />
-                    <span className="text-sm font-medium">Delete Product</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Activity */}
-              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                  <h3 className="font-semibold text-slate-800">Recent Activity</h3>
-                  <button className="text-sm text-violet-600 hover:text-violet-700 font-medium">View All</button>
-                </div>
-                <div className="p-5 space-y-4">
-                  {activityLog.slice(0, 3).map((activity) => (
-                    <div key={activity.id} className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        <activity.icon size={16} className="text-slate-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-700">{activity.action}</p>
-                        <p className="text-xs text-slate-400">
-                          by {activity.user} • {activity.time}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
