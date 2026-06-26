@@ -287,42 +287,6 @@ const sparkData = {
     vendors: [110, 112, 115, 118, 120, 121, 122, 123, 124, 125],
 };
 
-
-
-
-// function Sparkline({
-//     data,
-//     color,
-//     negative = false,
-// }: {
-//     data: number[];
-//     color: string;
-//     negative?: boolean;
-// }) {
-//     const sparkPoints = data.map((v, i) => ({ v, i }));
-//     return (
-//         <ResponsiveContainer width="100%" height={40}>
-//             <AreaChart data={sparkPoints} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
-//                 <defs>
-//                     <linearGradient id={`sg-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
-//                         <stop offset="5%" stopColor={color} stopOpacity={0.2} />
-//                         <stop offset="95%" stopColor={color} stopOpacity={0} />
-//                     </linearGradient>
-//                 </defs>
-//                 <Area
-//                     type="monotone"
-//                     dataKey="v"
-//                     stroke={color}
-//                     strokeWidth={1.5}
-//                     fill={`url(#sg-${color.replace("#", "")})`}
-//                     dot={false}
-//                     isAnimationActive={false}
-//                 />
-//             </AreaChart>
-//         </ResponsiveContainer>
-//     );
-// }
-
 export default function Dashboard() {
     const navigate = useNavigate()
     const Api = import.meta.env.VITE_API_URL as string;
@@ -468,7 +432,7 @@ export default function Dashboard() {
         });
     });
 
-     console.log("Img",productMap)
+   
 
     const topProducts = Object.values(productMap)
         .sort((a, b) => b.sales - a.sales)

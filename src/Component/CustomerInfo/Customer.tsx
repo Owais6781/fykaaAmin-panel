@@ -3,7 +3,6 @@ import MUIDataTable from "mui-datatables";
 import {  Package,} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Eye } from "lucide-react";
-
 import { useGetAllCustomersQuery } from "../../api/customerApi";
 
 
@@ -11,9 +10,11 @@ import { useGetAllCustomersQuery } from "../../api/customerApi";
 export default function Customer() {
 
   const navigate=useNavigate()
-  const { data: customers, isLoading, isError }= useGetAllCustomersQuery();
+  const { data, isLoading, isError }= useGetAllCustomersQuery();
 
 
+const customers = data ?? [];
+console.log("Custommer",customers)
 
   const tableData =
     customers?.map((customer) => ({

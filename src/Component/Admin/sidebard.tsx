@@ -44,7 +44,7 @@ const AdminLayout = () => {
   const Sidebar = () => (
     <div className="w-64 bg-gray-900 text-white h-full flex flex-col">
       {/* Logo */}
-      <div className="p-5 border-b border-gray-700">
+      <div className="p-4 border-b border-gray-700">
         <h1 className="text-2xl font-bold text-center">
           <span className="text-blue-500">Admin</span> Panel
         </h1>
