@@ -32,14 +32,14 @@ export const adminAuthApi = createApi({
   reducerPath: "adminAuthApi",
 
   baseQuery: fetchBaseQuery({
-    baseUrl: `${Api}/api/adminAuthRoutes`,
+    baseUrl: `${Api}/api`,
   }),
 
     tagTypes: ["auth"],
   endpoints: (builder) => ({
     adminRegister: builder.mutation<AuthResponse, RegisterPayload>({
       query: (body) => ({
-        url: "/admin/register",
+        url: "/register",
         method: "POST",
         body,
       }),
@@ -47,7 +47,7 @@ export const adminAuthApi = createApi({
 
     adminLogin: builder.mutation<AuthResponse, LoginPayload>({
       query: (body) => ({
-        url: "/admin/login",
+        url: "/login",
         method: "POST",
         body,
       }),
