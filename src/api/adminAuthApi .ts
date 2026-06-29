@@ -39,7 +39,7 @@ export const adminAuthApi = createApi({
   endpoints: (builder) => ({
     adminRegister: builder.mutation<AuthResponse, RegisterPayload>({
       query: (body) => ({
-        url: "/register",
+        url: "/admin/register",
         method: "POST",
         body,
       }),
@@ -47,7 +47,7 @@ export const adminAuthApi = createApi({
 
     adminLogin: builder.mutation<AuthResponse, LoginPayload>({
       query: (body) => ({
-        url: "/login",
+        url: "/admin/login",
         method: "POST",
         body,
       }),
