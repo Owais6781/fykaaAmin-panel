@@ -210,7 +210,7 @@
 
 import {
     ResponsiveContainer,
-   
+
     XAxis,
     YAxis,
     CartesianGrid,
@@ -218,19 +218,19 @@ import {
     PieChart,
     Pie,
     Cell,
- 
+
     AreaChart,
     Area,
 } from "recharts";
 
 import {
-  
+
     DollarSign,
     ShoppingBag,
     Users,
     Package,
     Store,
-  
+
     ChevronDown,
     Calendar,
     MoreHorizontal,
@@ -415,7 +415,7 @@ export default function Dashboard() {
 
 
     orders.forEach((order) => {
-        order.items?.forEach((item:any) => {
+        order.items?.forEach((item: any) => {
             const name = item.title || "Unknown Product";
 
             if (!productMap[name]) {
@@ -432,7 +432,7 @@ export default function Dashboard() {
         });
     });
 
-   
+
 
     const topProducts = Object.values(productMap)
         .sort((a, b) => b.sales - a.sales)
@@ -468,30 +468,30 @@ export default function Dashboard() {
         );
 
 
-        if (isError)
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4">
-      <div className="text-center">
-        <div className="text-6xl mb-4">📡</div>
+    if (isError)
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center px-4">
+                <div className="text-center">
+                    <div className="text-6xl mb-4">📡</div>
 
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          No Internet Connection
-        </h2>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                        No Internet Connection
+                    </h2>
 
-        <p className="text-slate-500 mb-6">
-          Please check your network and try again.
-        </p>
+                    <p className="text-slate-500 mb-6">
+                        Please check your network and try again.
+                    </p>
 
-        <button
-          onClick={() => window.location.reload()}
-          className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-        >
-          Retry
-        </button>
-      </div>
-    </div>
-  );
- 
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+
 
     return (
         <div className="min-h-screen  font-sans">
@@ -677,10 +677,10 @@ export default function Dashboard() {
                                 <div key={i} className="flex items-center gap-3">
                                     <span className="text-xs text-slate-400 w-4 shrink-0">{i + 1}</span>
                                     <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-base shrink-0">
-                                      
+
                                         {p.image?.[0] ? (
                                             <img
-                                                 src={`${Api}/api/image/${p.image}`}
+                                                src={`${Api}/api/image/${p.image}`}
                                                 alt={p.name}
                                                 className="w-full h-full object-cover"
                                             />
