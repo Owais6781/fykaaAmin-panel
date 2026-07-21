@@ -226,107 +226,107 @@
 
 
 
-import { useState } from "react";
-import { useAdminRegisterMutation } from "../../api/adminAuthApi ";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
-export default function Register() {
-  const navigate = useNavigate();
-  const [adminRegister, { isLoading }] = useAdminRegisterMutation();
+// import { useState } from "react";
+// import { useAdminRegisterMutation } from "../../api/adminAuthApi";
+// import { useNavigate } from "react-router-dom";
+// import { Link } from "react-router-dom";
+// export default function Register() {
+//   const navigate = useNavigate();
+//   const [adminRegister, { isLoading }] = useAdminRegisterMutation();
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-  });
+//   const [formData, setFormData] = useState({
+//     fullName: "",
+//     email: "",
+//     password: "",
+//   });
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500";
+//   const inputClass =
+//     "w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500";
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setFormData({
+//       ...formData,
+//       [e.target.name]: e.target.value,
+//     });
+//   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+//   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+//     e.preventDefault();
 
-    try {
-      const res = await adminRegister(formData).unwrap();
+//     try {
+//       const res = await adminRegister(formData).unwrap();
 
-      alert(res.message || "Registration Successful");
-      console.log(res);
+//       alert(res.message || "Registration Successful");
+//       console.log(res);
 
-      setFormData({
-        fullName: "",
-        email: "",
-        password: "",
-      });
-     navigate("/login")
-    } catch (error: any) {
-      console.log(error);
-      alert(error?.data?.message || "Error occurred");
-    }
-  };
+//       setFormData({
+//         fullName: "",
+//         email: "",
+//         password: "",
+//       });
+//      navigate("/login")
+//     } catch (error: any) {
+//       console.log(error);
+//       alert(error?.data?.message || "Error occurred");
+//     }
+//   };
 
-  return (
-    <div className="min-h-screen flex justify-center items-center bg-gray-100 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg w-full max-w-md"
-      >
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          Register
-        </h2>
+//   return (
+//     <div className="min-h-screen flex justify-center items-center bg-gray-100 px-4">
+//       <form
+//         onSubmit={handleSubmit}
+//         className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg w-full max-w-md"
+//       >
+//         <h2 className="text-2xl font-bold mb-6 text-center">
+//           Register
+//         </h2>
 
-        <div className="flex flex-col gap-4">
-          <input
-            name="fullName"
-            value={formData.fullName}
-            placeholder="Full Name"
-            onChange={handleChange}
-            className={inputClass}
-            required
-          />
+//         <div className="flex flex-col gap-4">
+//           <input
+//             name="fullName"
+//             value={formData.fullName}
+//             placeholder="Full Name"
+//             onChange={handleChange}
+//             className={inputClass}
+//             required
+//           />
 
-          <input
-            name="email"
-            value={formData.email}
-            type="email"
-            placeholder="Email"
-            onChange={handleChange}
-            className={inputClass}
-            required
-          />
+//           <input
+//             name="email"
+//             value={formData.email}
+//             type="email"
+//             placeholder="Email"
+//             onChange={handleChange}
+//             className={inputClass}
+//             required
+//           />
 
-          <input
-            name="password"
-            value={formData.password}
-            type="password"
-            placeholder="Password"
-            onChange={handleChange}
-            className={inputClass}
-            required
-          />
-        </div>
+//           <input
+//             name="password"
+//             value={formData.password}
+//             type="password"
+//             placeholder="Password"
+//             onChange={handleChange}
+//             className={inputClass}
+//             required
+//           />
+//         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="mt-6 w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition disabled:bg-gray-400"
-        >
-          {isLoading ? "Registering..." : "Register"}
-        </button>
+//         <button
+//           type="submit"
+//           disabled={isLoading}
+//           className="mt-6 w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition disabled:bg-gray-400"
+//         >
+//           {isLoading ? "Registering..." : "Register"}
+//         </button>
 
-        <p className="text-sm text-center mt-4">
-          Don't have an account?{" "}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Login
-          </Link>
-        </p>
-      </form>
-    </div>
-  );
-}
+//         <p className="text-sm text-center mt-4">
+//           Don't have an account?{" "}
+//           <Link to="/login" className="text-blue-600 hover:underline">
+//             Login
+//           </Link>
+//         </p>
+//       </form>
+//     </div>
+//   );
+// }

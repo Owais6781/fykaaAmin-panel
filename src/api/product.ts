@@ -5,13 +5,35 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 const Api = import.meta.env.VITE_API_URL
 
 export const ProductApi = createApi({
+    reducerPath: `ProductApi`,
+    baseQuery: fetchBaseQuery({
+        baseUrl: `${Api}/api`,
+        prepareHeaders: (headers) => {
+            const token = localStorage.getItem("token");
 
-    reducerPath: `api`,
-    baseQuery: fetchBaseQuery({ baseUrl: `${Api}/api` }),
+            if (token) {
+                headers.set("Authorization", `Bearer ${token}`);
+            }
 
-    tagTypes: ["product"],
+            return headers;
+        },
+
+    }),
+
+    tagTypes: ["ProductActivity", "product"],
 
     endpoints: (builder) => ({
+
+
+        addProduct: builder.mutation({
+            query: (formData) => ({
+                url: "/",
+                method: "POST",
+                body: formData,
+            }),
+        }),
+
+
 
         getProducts: builder.query<any[], void>({
             query: () => `/`,
@@ -22,43 +44,52 @@ export const ProductApi = createApi({
             query: (id) => `/${id}`,
             providesTags: ["product"]
         }),
-        
-        getProductImages:builder.query<Blob,{id:string,index:number}>({
-            query:({id,index})=>({
-                url:`${id}/img/${index}`,
-                method:"GET",
-                responseHandler:async(response)=>response.blob
+
+        getProductImages: builder.query<Blob, { id: string, index: number }>({
+            query: ({ id, index }) => ({
+                url: `${id}/img/${index}`,
+                method: "GET",
+                responseHandler: async (response) => response.blob
 
             })
         }),
 
-        updateProduct: builder.mutation<any,{ id: string;formData:FormData}>({
-            query: ({id,formData}) => ({
+        updateProduct: builder.mutation<any, { id: string; formData: FormData }>({
+            query: ({ id, formData }) => ({
                 url: `/${id}`,
                 method: "PUT",
-                body:formData,
-               
+                body: formData,
+
             }),
-             invalidatesTags: ["product"],
+            invalidatesTags: ["product"],
         }),
+
+
+        getActivityLog: builder.query({
+            query: (id) => `/${id}/activitylog`,
+            providesTags: ["ProductActivity"],
+        }),
+
 
         deleteProduct: builder.mutation<{ success: boolean }, string>({
             query: (id) => ({
                 url: `/${id}`,
                 method: "DELETE",
-              
+
             }),
-              invalidatesTags: ["product"],
+            invalidatesTags: ["ProductActivity", "product"],
         })
 
     })
 
 })
 
-export const { 
+export const {
+    useAddProductMutation,
     useGetProductsQuery,
-     useDeleteProductMutation,
-      useGetViewQuery,useGetProductImagesQuery,
-      useUpdateProductMutation } = ProductApi;
+    useDeleteProductMutation,
+    useGetViewQuery, useGetProductImagesQuery,
+    useGetActivityLogQuery,
+    useUpdateProductMutation } = ProductApi;
 
 

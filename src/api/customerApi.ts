@@ -53,11 +53,6 @@ export const customerApi = createApi({
       providesTags: ["Customers"],
     }),
 
-
-
-
-
-
     getProfile: builder.query<ProfileResponse, void>({
       query: (id) => `/profile/${id}`,
 

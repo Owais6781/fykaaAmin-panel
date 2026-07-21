@@ -29,17 +29,31 @@ const ProfileView = () => {
 
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [openModal, setOpenModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
+  
   const { data, isLoading, isError, } = useGetUserOrdersQuery(id)
+
 
   const customer = data?.user;
   const orders = data?.orders || [];
   const customerOrders = orders || [];
 
+  console.log("id:", id);
+  console.log("all use show", data)
+  const ordersPerPage = 10;
 
-  console.log("orders 👉", customerOrders);
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
 
-  console.log("img 👉",customerOrders?.[0]?.items?.[0]);
+  const currentOrders = customerOrders.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
+
+  const totalPages = Math.ceil(customerOrders.length / ordersPerPage);
+
+
 
 
 
@@ -75,28 +89,28 @@ const ProfileView = () => {
   }
 
   if (isError) {
-   return (
-            <div className="min-h-screen flex flex-col items-center justify-center px-4">
-                <div className="text-center">
-                    <div className="text-6xl mb-4">📡</div>
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4">
+        <div className="text-center">
+          <div className="text-6xl mb-4">📡</div>
 
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                        No Internet Connection
-                    </h2>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            No Internet Connection
+          </h2>
 
-                    <p className="text-slate-500 mb-6">
-                        Please check your network and try again.
-                    </p>
+          <p className="text-slate-500 mb-6">
+            Please check your network and try again.
+          </p>
 
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-                    >
-                        Retry
-                    </button>
-                </div>
-            </div>
-        );
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -258,7 +272,8 @@ const ProfileView = () => {
                   </thead>
 
                   <tbody>
-                    {customerOrders.map((order: any) => (
+
+                    {currentOrders.map((order: any) => (
                       <tr
                         key={order._id}
                         className="border-b hover:bg-slate-50"
@@ -305,8 +320,30 @@ const ProfileView = () => {
                         </td>
                       </tr>
                     ))}
+
                   </tbody>
                 </table>
+                <div className="flex items-center justify-between mt-6">
+                  <button
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+
+                  <span className="text-sm font-medium">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
             <OrderModal

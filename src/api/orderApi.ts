@@ -89,7 +89,6 @@ export const orderApi = createApi({
 
 
 
-
     // working code
     updateOrderStatus: builder.mutation({
       query: ({ id, orderStatus, paymentStatus }) => ({
@@ -99,6 +98,7 @@ export const orderApi = createApi({
       }),
       invalidatesTags: ["Orders"],
     }),
+
 
 
 
@@ -119,8 +119,8 @@ export const orderApi = createApi({
       }),
       providesTags: ["Orders"],
     }),
-// this  url is single user+order feching  show on table
-      getUserOrders: builder.query({
+    // this  url is single user+order feching  show on table
+    getUserOrders: builder.query({
       query: (userId) => `/user-orders/${userId}`,
     }),
 
@@ -142,6 +142,7 @@ export const orderApi = createApi({
 
 
 export const {
+
   useCreateOrderMutation,
   useGetProductImagesQuery,
   useGetMyOrdersQuery,

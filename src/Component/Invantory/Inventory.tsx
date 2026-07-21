@@ -23,19 +23,8 @@ import {
     ChevronDown,
     Sparkles,
     BarChart3,
-    // ArrowUpRight,
-    // ArrowDownRight,
-    // MoreVertical,
-    //   TrendingDown,
-    // Users,
-    // Star,
-    // Loader2,
-    // CheckCircle2,
-    // XCircle,
-    // Clock,
-    // Zap,
 } from "lucide-react";
-import { useGetProductsQuery, useDeleteProductMutation } from "../api/product";
+import { useGetProductsQuery, useDeleteProductMutation } from "../../api/product";
 import { useNavigate } from "react-router-dom";
 
 const Inventory = () => {
@@ -51,10 +40,7 @@ const Inventory = () => {
     const perpage = 15;
 
 
-
-
     const Api = import.meta.env.VITE_API_URL as string;
-
 
 
     const ImageByIndexUrl = (productId: string, index: number = 0) => {
@@ -64,8 +50,30 @@ const Inventory = () => {
 
     // Filter products
     const filteredProducts = products?.filter((product: any) => {
-        const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+        const search = searchTerm.toLowerCase();
+
+        // Stock Status
+        const stockStatus =
+            product.stock === 0
+                ? "out of stock"
+                : product.stock < 10
+                    ? "low stock"
+                    : "in stock";
+
+
+        const matchesSearch =
+            product.title?.toLowerCase().includes(search) ||
+            product.category?.toLowerCase().includes(search) ||
+            stockStatus.includes(search) ||
+            (search === "active"
+                ? product.isActive
+                : search === "inactive"
+                    ? !product.isActive
+                    : false);
+
+        const matchesCategory =
+            selectedCategory === "all" || product.category === selectedCategory;
+
         return matchesSearch && matchesCategory;
     });
 
@@ -159,54 +167,6 @@ const Inventory = () => {
             </div>
 
             <div className="relative z-10 p-4 md:p-6 lg:p-8">
-
-                {/* <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-200">
-                                <BarChart3 size={24} className="text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Inventory</h1>
-                                <p className="text-gray-500 text-sm">Welcome back, Admin! 👋</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-
-                        <button className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all">
-                            <Calendar size={18} className="text-gray-500" />
-                            <span className="text-sm font-medium text-gray-700">Last 30 days</span>
-                            <ChevronDown size={16} className="text-gray-400" />
-                        </button>
-
-
-                        <button
-                            onClick={handleRefresh}
-                            className="p-2.5 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all"
-                        >
-                            <RefreshCw size={20} className={`text-gray-600 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        </button>
-
-
-                        <button className="relative p-2.5 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all">
-                            <Bell size={20} className="text-gray-600" />
-                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                                3
-                            </span>
-                        </button>
-
-                     
-                        <button
-                            onClick={() => navigate("/dashboard/form")}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white rounded-xl font-semibold shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 hover:-translate-y-0.5 transition-all"
-                        >
-                            <Plus size={20} />
-                            <span className="hidden sm:inline">Add Product</span>
-                        </button>
-                    </div>
-                </div> */}
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
@@ -499,28 +459,51 @@ const Inventory = () => {
                                                         <span className={`font-semibold ${product.stock < 10 ? 'text-amber-600' : 'text-gray-800'}`}>
                                                             {product.stock}
                                                         </span>
-                                                        {product.stock < 10 && (
-                                                            <span className="px-2 py-0.5 bg-amber-100 text-amber-600 rounded text-xs font-medium">
-                                                                Low
-                                                            </span>
-                                                        )}
+
+                                                        <span
+                                                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+                                                            ${product.stock === 0
+                                                                    ? "bg-red-100 text-red-700"
+                                                                    : product.stock < 10
+                                                                        ? "bg-amber-100 text-amber-700"
+                                                                        : "bg-emerald-100 text-emerald-700"
+                                                                }`}
+                                                        >
+                                                            <span
+                                                                className={`w-2 h-2 rounded-full ${product.stock === 0
+                                                                    ? "bg-red-500"
+                                                                    : product.stock < 10
+                                                                        ? "bg-amber-500"
+                                                                        : "bg-emerald-500"
+                                                                    }`}
+                                                            ></span>
+
+                                                            {product.stock === 0
+                                                                ? "Out of Stock"
+                                                                : product.stock < 10
+                                                                    ? "Low Stock"
+                                                                    : "In Stock"}
+                                                        </span>
                                                     </div>
                                                 </td>
 
                                                 <td className="p-4">
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium ${product.stock > 0
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : 'bg-red-100 text-red-700'
-                                                        }`}>
-                                                        <span className={`w-2 h-2 rounded-full ${product.stock > 0 ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-                                                        {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                                                    <span
+                                                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${product.isActive
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-red-100 text-red-700"
+                                                            }`}
+                                                    >
+                                                        <span
+                                                            className={`mr-2 h-2 w-2 rounded-full ${product.isActive ? "bg-green-500" : "bg-red-500"
+                                                                }`}
+                                                        />
+                                                        {product.isActive ? "Active" : "InActive"}
                                                     </span>
                                                 </td>
 
                                                 <td className="p-4">
                                                     <div
-                                                        // className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        // className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                                         className="flex items-center gap-1 "
 
                                                     >

@@ -1,5 +1,5 @@
 
-import React, {  useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Package,
@@ -19,9 +19,7 @@ import {
   ExternalLink,
   BarChart3,
   ShoppingBag,
-  Activity,
   DollarSign,
-  Box,
   CheckCircle2,
   XCircle,
   AlertTriangle,
@@ -34,7 +32,21 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 
-import { useGetViewQuery } from "../api/product";
+import {
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  AreaChart,
+  Area,
+} from "recharts";
+
+import { useGetViewQuery } from "../../api/product";
+import { useGetActivityLogQuery } from "../../api/product";
+import { useGetMyOrdersQuery } from "../../api/orderApi";
+
+
 
 type ProductFromApi = {
   _id: string;
@@ -45,12 +57,16 @@ type ProductFromApi = {
   price?: number;
   discountPrice?: number;
   images?: any[];
-  
-   paymentOptions?: {
+  rating: number;
+  reviewCount: number;
+  soldCount: number;
+  featured: Boolean
+  isActive: Boolean
+  paymentOptions?: {
     cod?: boolean;
     online?: boolean;
   };
-   returnPolicy?: {
+  returnPolicy?: {
     isReturnable?: boolean;
     returnDays?: number;
     policyText?: string;
@@ -62,12 +78,18 @@ type ProductFromApi = {
 const ViewProduct: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  
+
   const Api = import.meta.env.VITE_API_URL as string;
 
   const { data, isLoading, isError, error, refetch } = useGetViewQuery(id!, {
     skip: !id,
   });
+
+  const { data: activityLog, } = useGetActivityLogQuery(id);
+  const { data: orderData } = useGetMyOrdersQuery();
+
+  const orders = orderData?? [];
+
 
   const product: ProductFromApi | undefined = useMemo(() => {
     if (!data || !id) return undefined;
@@ -83,6 +105,8 @@ const ViewProduct: React.FC = () => {
     return undefined;
   }, [data, id]);
 
+
+  const [range, setRange] = React.useState<"month" | "lastMonth" | "year">("month");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "images" | "analytics" | "activity">("overview");
@@ -149,25 +173,148 @@ const ViewProduct: React.FC = () => {
     );
   };
 
-  // Mock analytics data
+  //  analytics data
+
   const analyticsData = {
-    totalViews: 1247,
-    viewsChange: 12.5,
-    totalSales: 89,
-    salesChange: -3.2,
-    revenue: 45670,
-    revenueChange: 8.7,
-    conversionRate: 7.1,
-    conversionChange: 2.3,
+    totalViews: product?.reviewCount ?? 0,
+    viewsChange: 2.5,
+
+    totalSales: product?.soldCount ?? 0,
+    salesChange: 2.5,
+
+    revenue: (product?.discountPrice ?? 0) * (product?.soldCount ?? 0),
+    revenueChange: 2.5,
+
+    conversionRate: (product?.reviewCount ?? 0) > 0
+      ? (
+        ((product?.soldCount ?? 0) /
+          (product?.reviewCount ?? 1)) *
+        100
+      ).toFixed(1)
+      : "0.0",
+    conversionChange: 2.5,
   };
 
-  // Mock activity data
-  const activityLog = [
-    { id: 1, action: "Price updated", user: "Admin", time: "2 hours ago", icon: DollarSign },
-    { id: 2, action: "Stock updated to 45", user: "System", time: "5 hours ago", icon: Box },
-    { id: 3, action: "Image added", user: "Admin", time: "1 day ago", icon: ImageIcon },
-    { id: 4, action: "Product created", user: "Admin", time: "3 days ago", icon: Package },
-  ];
+  //   const analyticsData = {
+  //   totalSales: product?.soldCount ?? 0,
+  //   rating: product?.rating ?? 0,
+  //   totalReviews: product?.reviewCount ?? 0,
+  //   featured: product?.featured,
+  //   isActive: product?.isActive,
+  // };
+
+
+
+
+
+  const filterOrdersByRange = (orders:any) => {
+    const now = new Date();
+
+    return orders.filter((order:any) => {
+      // Current product ka order hona chahiye
+      const hasCurrentProduct = order.items?.some(
+        (item: any) =>
+          String(item.productId?._id || item.productId) ===
+          String(product?._id)
+      );
+
+      if (!hasCurrentProduct) return false;
+
+      if (!order.createdAt) return false;
+
+      const orderDate = new Date(order.createdAt);
+
+      switch (range) {
+        case "month":
+          return (
+            orderDate.getMonth() === now.getMonth() &&
+            orderDate.getFullYear() === now.getFullYear()
+          );
+
+        case "lastMonth": {
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+          return (
+            orderDate.getMonth() === lastMonth.getMonth() &&
+            orderDate.getFullYear() === lastMonth.getFullYear()
+
+          );
+        }
+
+        case "year":
+          return orderDate.getFullYear() === now.getFullYear();
+
+        default:
+          return true;
+      }
+    });
+  };
+
+
+
+  const productOrders = filterOrdersByRange(orders).filter((order: any) =>
+    order.items?.some(
+      (item: any) => String(item.productId) === String(product?._id)
+    )
+  );
+
+  console.log("productOrders", productOrders)
+
+  const revenueMap: Record<string, number> = {};
+  const orderMap: Record<string, number> = {};
+  const salesMap: Record<string, number> = {};
+
+  productOrders.forEach((order: any) => {
+    const date = new Date(order.createdAt).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+    });
+
+
+
+    // 
+    const productItem = order.items.find(
+      (item: any) => String(item.productId) === String(product?._id)
+    );
+
+    if (!productItem) return;
+
+    // Order Count
+    orderMap[date] = (orderMap[date] || 0) + 1;
+
+    // Sirf Delivered ko Sale maan lo
+    if (order.orderStatus === "Delivered") {
+      salesMap[date] =
+        (salesMap[date] || 0) + productItem.quantity;
+
+      revenueMap[date] =
+        (revenueMap[date] || 0) +
+        (productItem.discountPrice || productItem.price) *
+        productItem.quantity;
+    }
+  });
+
+
+  const salesChartData = Object.keys(orderMap).map((date) => ({
+    date,
+    orders: orderMap[date] || 0,
+    sales: salesMap[date] || 0,
+    revenue: revenueMap[date] || 0,
+  }));
+
+
+
+
+  const STATUS_BADGE_STYLES: Record<string, string> = {
+    Pending: "bg-yellow-50 text-yellow-700",
+    Confirmed: "bg-blue-50 text-blue-700",
+    Processing: "bg-violet-50 text-violet-700",
+    Shipped: "bg-amber-50 text-amber-700",
+    Delivered: "bg-green-50 text-green-700",
+    Cancelled: "bg-red-50 text-red-700",
+  };
+
+
 
   // Loading State
   if (!id) {
@@ -246,9 +393,8 @@ const ViewProduct: React.FC = () => {
   // Image Zoom Modal
   const ImageZoomModal = () => (
     <div
-      className={`fixed inset-0 z-50 bg-black/90 flex items-center justify-center transition-all duration-300 ${
-        isImageZoomed ? "opacity-100 visible" : "opacity-0 invisible"
-      }`}
+      className={`fixed inset-0 z-50 bg-black/90 flex items-center justify-center transition-all duration-300 ${isImageZoomed ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
       onClick={() => setIsImageZoomed(false)}
     >
       <button
@@ -287,9 +433,8 @@ const ViewProduct: React.FC = () => {
           <button
             key={idx}
             onClick={(e) => { e.stopPropagation(); setSelectedImageIndex(idx); }}
-            className={`w-2.5 h-2.5 rounded-full transition-all ${
-              idx === selectedImageIndex ? "bg-white w-8" : "bg-white/40 hover:bg-white/60"
-            }`}
+            className={`w-2.5 h-2.5 rounded-full transition-all ${idx === selectedImageIndex ? "bg-white w-8" : "bg-white/40 hover:bg-white/60"
+              }`}
           />
         ))}
       </div>
@@ -297,8 +442,8 @@ const ViewProduct: React.FC = () => {
   );
 
   return (
-     <div className="min-h-screen  bg-slate-50  overflow-hidden">
-  
+    <div className="min-h-screen  bg-slate-50  overflow-hidden">
+
       <ImageZoomModal />
 
       {/* Header */}
@@ -362,7 +507,7 @@ const ViewProduct: React.FC = () => {
               <div className="h-8 w-px bg-slate-200"></div>
 
               <button
-                onClick={() => navigate(`/edit/${product._id}`)}
+                onClick={() => navigate(`/dashboard/edit/${product._id}`)}
                 className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-colors"
               >
                 <Edit3 size={18} />
@@ -413,11 +558,10 @@ const ViewProduct: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-t-lg font-medium text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-slate-50 text-violet-600 border-b-2 border-violet-600"
-                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-                }`}
+                className={`flex items-center gap-2 px-4 py-3 rounded-t-lg font-medium text-sm transition-colors ${activeTab === tab.id
+                  ? "bg-slate-50 text-violet-600 border-b-2 border-violet-600"
+                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  }`}
               >
                 <tab.icon size={16} />
                 {tab.label}
@@ -589,10 +733,32 @@ const ViewProduct: React.FC = () => {
             {/* Right Column - Sidebar */}
             <div className="col-span-4 space-y-6">
               {/* Product Details */}
+
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <div className="p-5 border-b border-slate-100">
-                  <h3 className="font-semibold text-slate-800">Product Details</h3>
+
+                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                  <div className="flex items-center gap-2">
+                    <Eye size={18} className="text-violet-500" />
+                    <h3 className="text-lg font-semibold text-slate-800">
+                      Live Preview
+                    </h3>
+                  </div>
+
+                  <span
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${product.isActive
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                      }`}
+                  >
+                    <span
+                      className={`mr-2 h-2 w-2 rounded-full ${product.isActive ? "bg-green-500" : "bg-red-500"
+                        }`}
+                    />
+                    {product.isActive ? "Active" : "InActive"}
+                  </span>
                 </div>
+
+
                 <div className="p-5 space-y-4">
                   <div className="flex justify-between items-center py-2 border-b border-slate-100">
                     <span className="text-sm text-slate-500">Product ID</span>
@@ -640,9 +806,8 @@ const ViewProduct: React.FC = () => {
 
                   <div className="flex justify-between items-center py-2">
                     <span className="text-sm text-slate-500">Status</span>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                      (product.stock || 0) > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
-                    }`}>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${(product.stock || 0) > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                      }`}>
                       {(product.stock || 0) > 0 ? "Active" : "Inactive"}
                     </span>
                   </div>
@@ -653,8 +818,8 @@ const ViewProduct: React.FC = () => {
                     <div className="flex flex-col items-end gap-1">
                       <span
                         className={`px-2 py-1 rounded-md text-xs font-semibold ${product?.paymentOptions?.cod
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
                           }`}
                       >
                         COD: {product?.paymentOptions?.cod ? "Available" : "Not Available"}
@@ -677,8 +842,8 @@ const ViewProduct: React.FC = () => {
                     <div className="flex flex-col items-end gap-1">
                       <span
                         className={`px-2 py-1 rounded-md text-xs font-semibold ${product?.returnPolicy?.isReturnable
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
                           }`}
                       >
                         Returnable: {product?.returnPolicy?.isReturnable ? "Yes" : "No"}
@@ -693,14 +858,14 @@ const ViewProduct: React.FC = () => {
                       >
                         Return Days: {product?.returnPolicy?.returnDays ? product?.returnPolicy?.returnDays : "Not Available"}
                       </span>
-                      
+
                       <span
                         className={`px-2 py-1 rounded-md text-xs font-semibold ${product?.paymentOptions?.online
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-red-100 text-red-700"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-red-100 text-red-700"
                           }`}
                       >
-                       Policy Text: {product?.returnPolicy?.policyText ? product?.returnPolicy?.policyText : "Not Available"}
+                        Policy Text: {product?.returnPolicy?.policyText ? product?.returnPolicy?.policyText : "Not Available"}
                       </span>
                     </div>
                   </div>
@@ -798,9 +963,8 @@ const ViewProduct: React.FC = () => {
                   <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center">
                     <Eye size={24} className="text-violet-600" />
                   </div>
-                  <span className={`flex items-center gap-1 text-sm font-medium ${
-                    analyticsData.viewsChange >= 0 ? "text-emerald-600" : "text-red-600"
-                  }`}>
+                  <span className={`flex items-center gap-1 text-sm font-medium ${analyticsData.viewsChange >= 0 ? "text-emerald-600" : "text-red-600"
+                    }`}>
                     {analyticsData.viewsChange >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
                     {Math.abs(analyticsData.viewsChange)}%
                   </span>
@@ -814,9 +978,8 @@ const ViewProduct: React.FC = () => {
                   <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
                     <ShoppingBag size={24} className="text-emerald-600" />
                   </div>
-                  <span className={`flex items-center gap-1 text-sm font-medium ${
-                    analyticsData.salesChange >= 0 ? "text-emerald-600" : "text-red-600"
-                  }`}>
+                  <span className={`flex items-center gap-1 text-sm font-medium ${analyticsData.salesChange >= 0 ? "text-emerald-600" : "text-red-600"
+                    }`}>
                     {analyticsData.salesChange >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
                     {Math.abs(analyticsData.salesChange)}%
                   </span>
@@ -830,9 +993,8 @@ const ViewProduct: React.FC = () => {
                   <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
                     <DollarSign size={24} className="text-amber-600" />
                   </div>
-                  <span className={`flex items-center gap-1 text-sm font-medium ${
-                    analyticsData.revenueChange >= 0 ? "text-emerald-600" : "text-red-600"
-                  }`}>
+                  <span className={`flex items-center gap-1 text-sm font-medium ${analyticsData.revenueChange >= 0 ? "text-emerald-600" : "text-red-600"
+                    }`}>
                     {analyticsData.revenueChange >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
                     {Math.abs(analyticsData.revenueChange)}%
                   </span>
@@ -846,9 +1008,8 @@ const ViewProduct: React.FC = () => {
                   <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
                     <TrendingUp size={24} className="text-blue-600" />
                   </div>
-                  <span className={`flex items-center gap-1 text-sm font-medium ${
-                    analyticsData.conversionChange >= 0 ? "text-emerald-600" : "text-red-600"
-                  }`}>
+                  <span className={`flex items-center gap-1 text-sm font-medium ${analyticsData.conversionChange >= 0 ? "text-emerald-600" : "text-red-600"
+                    }`}>
                     {analyticsData.conversionChange >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
                     {Math.abs(analyticsData.conversionChange)}%
                   </span>
@@ -859,23 +1020,164 @@ const ViewProduct: React.FC = () => {
             </div>
 
             {/* Charts Placeholder */}
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <h3 className="text-lg font-semibold text-slate-800 mb-4">Sales Over Time</h3>
-                <div className="h-64 flex items-center justify-center bg-slate-50 rounded-lg">
-                  <div className="text-center">
-                    <BarChart3 size={48} className="mx-auto text-slate-300 mb-2" />
-                    <p className="text-slate-500">Chart visualization would go here</p>
+            <div className="grid grid-cols-2 gap-6 items-stretch">
+              <div className="">
+                <div className="col-span-2 bg-white rounded-2xl border border-slate-100 p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-[15px] font-semibold text-slate-800">Sales Overview</h2>
+                      <div className="flex items-center gap-4 mt-2">
+                        <span className="flex items-center gap-1.5 text-[12px] text-slate-500">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" />
+                          Revenue
+                        </span>
+                        <span className="flex items-center gap-1.5 text-[12px] text-slate-500">
+                          <span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" />
+                          Orders
+                        </span>
+                      </div>
+                    </div>
+                    <select className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 outline-none cursor-pointer"
+                      value={range}
+                      onChange={(e) => setRange(e.target.value as any)}
+                    >
+                      <option>This Month</option>
+                      <option>Last Month</option>
+                      <option>This Year</option>
+                    </select>
                   </div>
+
+                  <ResponsiveContainer width="100%" height={240}>
+                    <AreaChart data={salesChartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="ordGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#60a5fa" stopOpacity={0.12} />
+                          <stop offset="95%" stopColor="#60a5fa" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 11, fill: "#94a3b8" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        yAxisId="left"
+                        tick={{ fontSize: 11, fill: "#94a3b8" }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(v) => `₹${v / 1000}K`}
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        tick={{ fontSize: 11, fill: "#94a3b8" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: 10,
+                          border: "1px solid #e2e8f0",
+                          fontSize: 12,
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                        }}
+
+                        formatter={(val, name) => {
+                          const value = typeof val === "number" ? val : 0;
+
+                          return name === "revenue"
+                            ? [`₹${value.toLocaleString()}`, "Revenue"]
+                            : [value, "Orders"];
+                        }}
+                      />
+                      <Area
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#6366f1"
+                        strokeWidth={2.5}
+                        fill="url(#revGrad)"
+                        dot={false}
+                      />
+                      <Area
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="orders"
+                        stroke="#60a5fa"
+                        strokeWidth={2.5}
+                        fill="url(#ordGrad)"
+                        dot={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <h3 className="text-lg font-semibold text-slate-800 mb-4">Traffic Sources</h3>
-                <div className="h-64 flex items-center justify-center bg-slate-50 rounded-lg">
-                  <div className="text-center">
-                    <Activity size={48} className="mx-auto text-slate-300 mb-2" />
-                    <p className="text-slate-500">Chart visualization would go here</p>
+
+              <div className="bg-white rounded-xl border border-slate-200 ">
+                <div className="col-span-2 p-5 h-64">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-[15px] font-semibold text-slate-800">Recent Orders</h2>
+                    <button className="text-[12px] text-indigo-500 font-medium hover:underline"
+                    // onClick={handleOrderBook}
+                    >
+                      View all
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[12px] text-slate-400 border-b border-slate-100">
+                          <th className="text-left pb-3 font-medium">Order ID</th>
+                          <th className="text-left pb-3 font-medium">Customer</th>
+                          <th className="text-left pb-3 font-medium">Date</th>
+                          <th className="text-left pb-3 font-medium">Amount</th>
+                          <th className="text-left pb-3 font-medium">Status</th>
+                          <th className="pb-3" />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {productOrders.slice(0, 5).map((order: any) => (
+                          <tr key={order._id} className="border-b border-slate-50 last:border-0">
+                            <td className="py-3.5 text-indigo-600 font-medium text-[13px]">
+                              {order.orderId || order._id}
+                            </td>
+                            <td className="py-3.5 text-slate-700 text-[13px]">
+                              {order?.userInfo?.fullName}
+                            </td>
+                            <td className="py-3.5 text-slate-400 text-[12px]">
+                              {order.createdAt
+                                ? new Date(order.createdAt).toLocaleDateString("en-IN", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                })
+                                : "—"}
+                            </td>
+                            <td className="py-3.5 text-slate-700 text-[13px]">
+                              ₹{(order.totalAmount || 0).toLocaleString()}
+                            </td>
+                            <td className="py-3.5">
+                              <span
+                                className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${STATUS_BADGE_STYLES[order.orderStatus] || "bg-slate-100 text-slate-600"
+                                  }`}
+                              >
+                                {order.orderStatus}
+                              </span>
+                            </td>
+                            <td className="py-3.5 text-slate-300">
+                              <MoreHorizontal size={15} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -892,22 +1194,55 @@ const ViewProduct: React.FC = () => {
             </div>
 
             <div className="divide-y divide-slate-100">
-              {activityLog.map((activity) => (
-                <div key={activity.id} className="p-6 flex items-start gap-4 hover:bg-slate-50 transition-colors">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-                    <activity.icon size={20} className="text-slate-500" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-slate-800">{activity.action}</p>
-                      <span className="text-sm text-slate-400">{activity.time}</span>
+
+              {activityLog?.data?.length > 0 &&
+                activityLog.data.map((activity: any) => (
+                  <div
+                    key={activity._id}
+                    className="p-6 flex items-start gap-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                      <History size={20} className="text-slate-500" />
                     </div>
-                    <p className="text-sm text-slate-500 mt-1">by {activity.user}</p>
+
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-slate-800">
+                          {activity.action}
+                        </p>
+
+                        {/* <span className="text-sm text-slate-400">
+                          {new Date(activity.createdAt).toLocaleString("en-GB",)}
+                        </span> */}
+                        <div>
+  <div className="text-sm font-medium text-slate-700">
+    {new Date(activity.createdAt).toLocaleDateString("en-GB",{
+        day: "2-digit",
+  month: "short",
+  year: "numeric",
+    })}
+  </div>
+
+  <div className="text-xs text-slate-400">
+    {new Date(activity.createdAt).toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })}
+  </div>
+</div>
+                      </div>
+
+                      <p className="text-sm text-slate-500 mt-1">
+                        by {activity.by}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
+
+
         )}
       </main>
     </div>

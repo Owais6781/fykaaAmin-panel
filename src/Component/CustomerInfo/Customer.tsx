@@ -5,8 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { Eye } from "lucide-react";
 import { useGetAllCustomersQuery } from "../../api/customerApi";
 
-
-
 export default function Customer() {
 
   const navigate=useNavigate()
@@ -14,7 +12,7 @@ export default function Customer() {
 
 
 const customers = data ?? [];
-console.log("Custommer",customers)
+
 
   const tableData =
     customers?.map((customer) => ({
@@ -72,13 +70,31 @@ console.log("Custommer",customers)
         );
   }
 
-  if (isError) {
+ if (isError) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p style={{ color: "red" }}>Error loading customers</p>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4">
+        <div className="text-center">
+          <div className="text-6xl mb-4">📡</div>
+
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            No Internet Connection
+          </h2>
+
+          <p className="text-slate-500 mb-6">
+            Please check your network and try again.
+          </p>
+
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen  p-6 ">

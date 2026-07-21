@@ -23,6 +23,7 @@ import {
   RotateCcw,
   ShieldCheck,
 } from "lucide-react";
+import { useAddProductMutation } from "../../api/product"
 
 type FormState = {
   category: string;
@@ -42,6 +43,13 @@ type FormState = {
 
 
 const ProductForm: React.FC = () => {
+
+
+  const [addProduct, { isLoading }] = useAddProductMutation();
+
+
+
+
   const [formData, setFormData] = useState<FormState>({
     category: "",
     title: "",
@@ -50,7 +58,7 @@ const ProductForm: React.FC = () => {
     stock: "",
     price: "",
     discountPrice: "",
-    
+
     cod: false,
     online: false,
     isReturnable: false,
@@ -66,7 +74,7 @@ const ProductForm: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isDragging, setIsDragging] = useState(false);
 
-  const Api = import.meta.env.VITE_API_URL;
+
 
   const categories = [
     {
@@ -157,26 +165,26 @@ const ProductForm: React.FC = () => {
 
 
   const handleChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-) => {
-  const { name, value } = e.target;
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
 
-  setFormData((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-
-  // Clear error if user types
-  if (errors[name]) {
-    setErrors((prev) => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: "",
+      [name]: value,
     }));
-  }
-};
-  
 
- const handleCheckbox  = (name: "cod" | "online" | "isReturnable", checked: boolean) => {
+    // Clear error if user types
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
+
+
+  const handleCheckbox = (name: "cod" | "online" | "isReturnable", checked: boolean) => {
     if (name === "isReturnable") {
       setFormData((prev) => ({
         ...prev,
@@ -218,12 +226,12 @@ const ProductForm: React.FC = () => {
     }
 
     if (
-      formData.isReturnable )
-     if (!formData.returnDays || Number(formData.returnDays) < 0) {
-      newErrors.returnDays = "Return days must be valid";
-    }
+      formData.isReturnable)
+      if (!formData.returnDays || Number(formData.returnDays) < 0) {
+        newErrors.returnDays = "Return days must be valid";
+      }
 
-    if ( !formData.policyText.trim()) {
+    if (!formData.policyText.trim()) {
       newErrors.policyText = "Return policy text is required";
     }
 
@@ -285,68 +293,53 @@ const ProductForm: React.FC = () => {
     FD.append("price", formData.price);
     FD.append("discountPrice", formData.discountPrice);
 
-    // nested schema fields
-    // FD.append("paymentOptions.cod", String(formData.cod));
-    // FD.append("paymentOptions.online", String(formData.online));
-
-    // FD.append(
-    //   "returnPolicy.isReturnable",
-    //   String(formData.isReturnable)
-    // );
-    // FD.append("returnPolicy.returnDays", formData.returnDays);
-    // FD.append("returnPolicy.policyText", formData.policyText);
-
-    
-      FD.append("cod", String(formData.cod));
-      FD.append("online", String(formData.online));
-      FD.append("isReturnable", String(formData.isReturnable));
-      FD.append("returnDays", formData.isReturnable ? formData.returnDays || "7" : "0");
-      FD.append(
-        "policyText",
-        formData.isReturnable
-          ? formData.policyText || `${formData.returnDays || 7} days return available`
-          : "This product is non-returnable"
-      );
+    FD.append("cod", String(formData.cod));
+    FD.append("online", String(formData.online));
+    FD.append("isReturnable", String(formData.isReturnable));
+    FD.append("returnDays", formData.isReturnable ? formData.returnDays || "7" : "0");
+    FD.append(
+      "policyText",
+      formData.isReturnable
+        ? formData.policyText || `${formData.returnDays || 7} days return available`
+        : "This product is non-returnable"
+    );
 
     formData.images.forEach((file) => {
       FD.append("images", file);
     });
 
+
     try {
-      const res = await fetch(`${Api}/api`, {
-        method: "POST",
-        body: FD,
+      const data = await addProduct(FD).unwrap();
+
+      console.log(data);
+
+      setSubmitStatus("success");
+
+      setFormData({
+        category: "",
+        title: "",
+        description: "",
+        images: [],
+        stock: "",
+        price: "",
+        discountPrice: "",
+        cod: false,
+        online: false,
+        isReturnable: false,
+        returnDays: "0",
+        policyText: "This product is non-returnable",
       });
 
-      const data = await res.json();
+      setTimeout(() => navigate("/dashboard/inventory"), 2000);
 
-      if (res.ok) {
-        setSubmitStatus("success");
-        setFormData({
-          category: "",
-          title: "",
-          description: "",
-          images: [],
-          stock: "",
-          price: "",
-          discountPrice: "",
-          cod: false,
-          online: false,
-          isReturnable: false,
-          returnDays: "0",
-          policyText: "This product is non-returnable",
-        });
+    } catch (err: any) {
+      console.log(err);
 
-        setTimeout(() => navigate("/inventory"), 2000);
-      } else {
-        throw new Error(data.message || "Upload failed");
-      }
-    } catch (err) {
-      console.error("Upload error:", err);
       setSubmitStatus("error");
-    } finally {
-      setIsSubmitting(false);
     }
+
+
   };
 
   const calculateDiscount = () => {
@@ -358,7 +351,24 @@ const ProductForm: React.FC = () => {
     return 0;
   };
 
- ;
+
+   if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600 mx-auto"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Package size={28} className="text-purple-600" />
+            </div>
+          </div>
+          <p className="mt-6 text-gray-600 font-medium">Loading Inventory...</p>
+          <p className="text-sm text-gray-400 mt-1">Please wait while we fetch your data</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen  relative overflow-hidden">
@@ -372,9 +382,9 @@ const ProductForm: React.FC = () => {
           Back
         </button>
       </div> */}
-     
+
       <div className="max-w-5xl mx-auto relative z-10 py-8 px-4 sm:px-6 lg:px-8">
-        
+
 
         {submitStatus === "success" && (
           <div className="mb-8 p-5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-4 animate-fade-in shadow-lg shadow-emerald-100">
@@ -429,17 +439,15 @@ const ProductForm: React.FC = () => {
                             setFormData({ ...formData, category: cat.value });
                             if (errors.category) setErrors({ ...errors, category: "" });
                           }}
-                          className={`p-4 rounded-2xl border-2 transition-all duration-300 group ${
-                            formData.category === cat.value
+                          className={`p-4 rounded-2xl border-2 transition-all duration-300 group ${formData.category === cat.value
                               ? `bg-gradient-to-br ${cat.color} border-transparent shadow-lg scale-[1.02] text-white`
                               : `${cat.lightBg} hover:shadow-md hover:scale-[1.01]`
-                          }`}
+                            }`}
                         >
                           <span className="text-2xl mb-2 block">{cat.icon}</span>
                           <span
-                            className={`text-sm font-medium ${
-                              formData.category === cat.value ? "text-white" : "text-gray-700"
-                            }`}
+                            className={`text-sm font-medium ${formData.category === cat.value ? "text-white" : "text-gray-700"
+                              }`}
                           >
                             {cat.label}
                           </span>
@@ -465,11 +473,10 @@ const ProductForm: React.FC = () => {
                       value={formData.title}
                       onChange={handleChange}
                       placeholder="e.g., Modern LED Desk Lamp"
-                      className={`w-full px-5 py-4 bg-gray-50 border-2 rounded-xl outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 ${
-                        errors.title
+                      className={`w-full px-5 py-4 bg-gray-50 border-2 rounded-xl outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 ${errors.title
                           ? "border-red-300 focus:border-red-500 focus:bg-red-50"
                           : "border-gray-200 focus:border-purple-500 focus:bg-purple-50/30"
-                      }`}
+                        }`}
                     />
                     {errors.title && (
                       <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
@@ -490,11 +497,10 @@ const ProductForm: React.FC = () => {
                       onChange={handleChange}
                       rows={5}
                       placeholder="Describe your product features, materials, dimensions..."
-                      className={`w-full px-5 py-4 bg-gray-50 border-2 rounded-xl outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none ${
-                        errors.description
+                      className={`w-full px-5 py-4 bg-gray-50 border-2 rounded-xl outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 resize-none ${errors.description
                           ? "border-red-300 focus:border-red-500 focus:bg-red-50"
                           : "border-gray-200 focus:border-purple-500 focus:bg-purple-50/30"
-                      }`}
+                        }`}
                     />
                     {errors.description && (
                       <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
@@ -526,11 +532,10 @@ const ProductForm: React.FC = () => {
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${
-                      isDragging
+                    className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${isDragging
                         ? "border-purple-500 bg-purple-50"
                         : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <input
                       ref={fileInputRef}
@@ -542,15 +547,13 @@ const ProductForm: React.FC = () => {
                       className="hidden"
                     />
                     <div
-                      className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                        isDragging ? "bg-purple-100" : "bg-gray-100"
-                      }`}
+                      className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center transition-all duration-300 ${isDragging ? "bg-purple-100" : "bg-gray-100"
+                        }`}
                     >
                       <Upload
                         size={32}
-                        className={`transition-colors ${
-                          isDragging ? "text-purple-500" : "text-gray-400"
-                        }`}
+                        className={`transition-colors ${isDragging ? "text-purple-500" : "text-gray-400"
+                          }`}
                       />
                     </div>
                     <p className="text-gray-700 font-medium mb-1">
@@ -652,11 +655,10 @@ const ProductForm: React.FC = () => {
                         placeholder="0.00"
                         step="0.01"
                         min="0"
-                        className={`w-full pl-10 pr-5 py-4 bg-gray-50 border-2 rounded-xl outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 ${
-                          errors.price
+                        className={`w-full pl-10 pr-5 py-4 bg-gray-50 border-2 rounded-xl outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 ${errors.price
                             ? "border-red-300 focus:border-red-500"
                             : "border-gray-200 focus:border-emerald-500 focus:bg-emerald-50/30"
-                        }`}
+                          }`}
                       />
                     </div>
                     {errors.price && (
@@ -684,11 +686,10 @@ const ProductForm: React.FC = () => {
                         placeholder="0.00"
                         step="0.01"
                         min="0"
-                        className={`w-full pl-10 pr-5 py-4 bg-gray-50 border-2 rounded-xl outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 ${
-                          errors.discountPrice
+                        className={`w-full pl-10 pr-5 py-4 bg-gray-50 border-2 rounded-xl outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 ${errors.discountPrice
                             ? "border-red-300 focus:border-red-500"
                             : "border-gray-200 focus:border-emerald-500 focus:bg-emerald-50/30"
-                        }`}
+                          }`}
                       />
                     </div>
                     {errors.discountPrice && (
@@ -774,7 +775,7 @@ const ProductForm: React.FC = () => {
                         name="returnPolicy.isReturnable"
                         checked={formData.isReturnable}
                         // onChange={handleChange}
-                         onChange={(e) => handleCheckbox("isReturnable", e.target.checked)}
+                        onChange={(e) => handleCheckbox("isReturnable", e.target.checked)}
                         className="h-4 w-4"
                       />
                     </label>
@@ -810,8 +811,8 @@ const ProductForm: React.FC = () => {
                           <textarea
                             name="policyText"
                             value={formData.policyText}
-                             onChange={handleChange}
-                             
+                            onChange={handleChange}
+
                             rows={3}
                             className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl outline-none resize-none focus:border-purple-500"
                             placeholder="e.g. 7 days return available"
@@ -834,7 +835,7 @@ const ProductForm: React.FC = () => {
                       </p>
                       <div className="flex items-baseline gap-3">
                         {formData.discountPrice &&
-                        parseFloat(formData.discountPrice) < parseFloat(formData.price) ? (
+                          parseFloat(formData.discountPrice) < parseFloat(formData.price) ? (
                           <>
                             <span className="text-3xl font-black text-emerald-600">
                               ₹{formData.discountPrice}

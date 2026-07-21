@@ -90,7 +90,7 @@
 // import { Toast } from 'primereact/toast';
 
 import { useState } from "react";
-import { useAdminLoginMutation } from "../../api/adminAuthApi ";
+import { useAdminLoginMutation } from "../../api/adminAuthApi";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 
@@ -98,9 +98,6 @@ import { Link } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
-
-
-
   const [adminLogin, { isLoading }] = useAdminLoginMutation();
 
   const [formData, setFormData] = useState({
@@ -127,29 +124,19 @@ const Login = () => {
 
       }
 
-
-      if (res.admin) {
-        localStorage.setItem("admin", JSON.stringify(res.admin));
+      if (res.user) {
+        localStorage.setItem("admin", JSON.stringify(res.user));
       }
 
-
-      alert(res.message || "Login successful");
+      alert(res.message||"Contact Faykaa " || "Login successful");
       navigate("/dashboard", { replace: true });
-
-      // ✅ role based redirect
-      // if (res.admin?.role === "admin") {
-      //   navigate("/");
-      // } else if (res.admin?.role === "admin") {
-      //   navigate("/admin/dashboard");
-      // } else {
-      //   navigate("/seller/dashboard");
-      // }
 
     } catch (error: any) {
       console.log(error);
       alert(error?.data?.message || "Login failed");
     }
   };
+  
   // const toast = useRef<Toast>(null);
 
   // const showSuccess = () => {
@@ -222,7 +209,7 @@ const Login = () => {
           <Button label="Login" className="mr-2" onClick={showSuccess} /> */}
           <p className="text-sm text-center mt-4">
             Don't have an account?{" "}
-            <Link to="/register" className="text-blue-600 hover:underline">
+            <Link to="/SellerRegister" className="text-blue-600 hover:underline">
               Register
             </Link>
           </p>

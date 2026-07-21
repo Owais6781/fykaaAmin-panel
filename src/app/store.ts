@@ -3,8 +3,8 @@ import authReducer from "../api/fechingapi"
 import { authApi } from "../api/userapi"
 import { ProductApi } from "../api/product"
 import { orderApi } from "../api/orderApi"
-
-import { adminAuthApi } from "../api/adminAuthApi ";
+import {reviewApi} from  "../api/review"
+import { adminAuthApi } from "../api/adminAuthApi";
 import { customerApi } from "../api/customerApi"
 
 
@@ -15,6 +15,7 @@ export const store = configureStore({
         [authApi.reducerPath]: authApi.reducer,
         [ProductApi.reducerPath]: ProductApi.reducer,
         [orderApi.reducerPath]: orderApi.reducer,
+        [reviewApi.reducerPath]: reviewApi.reducer,
         [customerApi.reducerPath]: customerApi.reducer,
         [adminAuthApi.reducerPath]: adminAuthApi.reducer,
 
@@ -25,6 +26,7 @@ export const store = configureStore({
             authApi.middleware,
             ProductApi.middleware,
             orderApi.middleware,
+            reviewApi.middleware,
             customerApi.middleware,
             adminAuthApi.middleware,
         )

@@ -5,7 +5,7 @@ import {
   useGetViewQuery,
   useUpdateProductMutation,
   useDeleteProductMutation,
-} from "../api/product"
+} from "../../api/product"
 import {
   Package,
   FileText,
@@ -39,6 +39,7 @@ type ProductFromApi = {
   stock?: number;
   price?: number;
   discountPrice?: number;
+  isActive?: boolean;
   images?: any[];
   paymentOptions?: {
     cod?: boolean;
@@ -59,6 +60,7 @@ type FormDataState = {
   stock: string;
   price: string;
   discountPrice: string;
+  isActive: boolean;
   cod: boolean;
   online: boolean;
   isReturnable: boolean;
@@ -90,6 +92,7 @@ const Edit: React.FC = () => {
     stock: "",
     price: "",
     discountPrice: "",
+    isActive: true,
     cod: false,
     online: false,
     isReturnable: false,
@@ -139,6 +142,7 @@ const Edit: React.FC = () => {
       stock: product.stock != null ? String(product.stock) : "",
       price: product.price != null ? String(product.price) : "",
       discountPrice: product.discountPrice != null ? String(product.discountPrice) : "",
+      isActive: product.isActive ?? true,
       images: [],
       cod: product.paymentOptions?.cod ?? false,
       online: product.paymentOptions?.online ?? false,
@@ -153,8 +157,8 @@ const Edit: React.FC = () => {
 
     const imgs = Array.isArray(product.images)
       ? product.images.map((x: any) =>
-          typeof x === "string" ? x : x?._id || String(x)
-        )
+        typeof x === "string" ? x : x?._id || String(x)
+      )
       : [];
 
     setExistingImages(imgs);
@@ -162,39 +166,15 @@ const Edit: React.FC = () => {
     setIsDataLoaded(true);
   }, [product]);
 
-  // const handleChange = (
-  //   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  // ) => {
-  //   const target = e.target as HTMLInputElement;
-  //   const { name, value, type, checked } = target;
 
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     [name]: type === "checkbox" ? checked : value,
-  //   }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type, checked } = e.target as HTMLInputElement;
 
-  //   if (errors[name]) {
-  //     setErrors((prev) => ({ ...prev, [name]: "" }));
-  //   }
-
-  //   if (name === "isReturnable" && type === "checkbox" && !checked) {
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       isReturnable: false,
-  //       returnDays: "0",
-  //       policyText: "This product is non-returnable",
-  //     }));
-  //   }
-  // };
-
-const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-  const { name, value, type, checked } = e.target as HTMLInputElement;
-
-  setFormData((prev) => ({
-    ...prev,
-    [name]: type === "checkbox" ? checked : value,
-  }));
-};
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -300,10 +280,10 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
       FD.append("stock", formData.stock);
       FD.append("price", formData.price);
       FD.append("discountPrice", formData.discountPrice);
-
+      FD.append("isActive", String(formData.isActive));
       FD.append("paymentOptions.cod", String(formData.cod));
       FD.append("paymentOptions.online", String(formData.online));
-      
+
       FD.append("returnPolicy.isReturnable", String(formData.isReturnable));
       FD.append("returnPolicy.returnDays", formData.returnDays);
       FD.append("returnPolicy.policyText", formData.policyText);
@@ -338,6 +318,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
       stock: product.stock != null ? String(product.stock) : "",
       price: product.price != null ? String(product.price) : "",
       discountPrice: product.discountPrice != null ? String(product.discountPrice) : "",
+      isActive: product.isActive ?? true,
       images: [],
       cod: product.paymentOptions?.cod ?? false,
       online: product.paymentOptions?.online ?? false,
@@ -352,8 +333,8 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
 
     const imgs = Array.isArray(product.images)
       ? product.images.map((x: any) =>
-          typeof x === "string" ? x : x?._id || String(x)
-        )
+        typeof x === "string" ? x : x?._id || String(x)
+      )
       : [];
 
     setExistingImages(imgs);
@@ -489,8 +470,8 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
     formData.images.length > 0
       ? URL.createObjectURL(formData.images[0])
       : existingImages.length > 0
-      ? imageUrl(product._id, 0)
-      : "";
+        ? imageUrl(product._id, 0)
+        : "";
 
   return (
     <div className="min-h-screen  bg-gradient-to-br from-slate-50 via-white to-slate-100">
@@ -616,11 +597,10 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id as "basic" | "media" | "pricing")}
-                  className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
-                    activeTab === tab.id
+                  className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${activeTab === tab.id
                       ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30"
                       : "text-slate-600 hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   <tab.icon size={18} />
                   {tab.label}
@@ -657,17 +637,15 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                                 setErrors((prev) => ({ ...prev, category: "" }));
                               }
                             }}
-                            className={`p-4 rounded-2xl border-2 transition-all duration-200 text-left ${
-                              formData.category === cat.value
+                            className={`p-4 rounded-2xl border-2 transition-all duration-200 text-left ${formData.category === cat.value
                                 ? "border-violet-500 bg-violet-50 shadow-lg shadow-violet-500/20"
                                 : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                            }`}
+                              }`}
                           >
                             <span className="text-2xl mb-2 block">{cat.icon}</span>
                             <span
-                              className={`font-semibold ${
-                                formData.category === cat.value ? "text-violet-700" : "text-slate-700"
-                              }`}
+                              className={`font-semibold ${formData.category === cat.value ? "text-violet-700" : "text-slate-700"
+                                }`}
                             >
                               {cat.label}
                             </span>
@@ -692,11 +670,10 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                         value={formData.title}
                         onChange={handleChange}
                         placeholder="Enter product title..."
-                        className={`w-full px-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-lg ${
-                          errors.title
+                        className={`w-full px-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-lg ${errors.title
                             ? "border-red-300 focus:border-red-500 bg-red-50"
                             : "border-slate-200 focus:border-violet-500 focus:bg-violet-50/30"
-                        }`}
+                          }`}
                       />
                       <div className="flex justify-between mt-2">
                         {errors.title ? (
@@ -721,11 +698,10 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                         onChange={handleChange}
                         rows={5}
                         placeholder="Describe your product..."
-                        className={`w-full px-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 resize-none ${
-                          errors.description
+                        className={`w-full px-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 resize-none ${errors.description
                             ? "border-red-300 focus:border-red-500 bg-red-50"
                             : "border-slate-200 focus:border-violet-500 focus:bg-violet-50/30"
-                        }`}
+                          }`}
                       />
                       <div className="flex justify-between mt-2">
                         {errors.description ? (
@@ -754,28 +730,26 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                           onChange={handleChange}
                           placeholder="0"
                           min="0"
-                          className={`w-48 px-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-lg font-semibold ${
-                            errors.stock
+                          className={`w-48 px-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-lg font-semibold ${errors.stock
                               ? "border-red-300 focus:border-red-500 bg-red-50"
                               : "border-slate-200 focus:border-violet-500"
-                          }`}
+                            }`}
                         />
 
                         {formData.stock !== "" && (
                           <div
-                            className={`px-4 py-2 rounded-full font-medium text-sm ${
-                              parseInt(formData.stock) === 0
+                            className={`px-4 py-2 rounded-full font-medium text-sm ${parseInt(formData.stock) === 0
                                 ? "bg-red-100 text-red-700"
                                 : parseInt(formData.stock) <= 5
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-emerald-100 text-emerald-700"
-                            }`}
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-emerald-100 text-emerald-700"
+                              }`}
                           >
                             {parseInt(formData.stock) === 0
                               ? "Out of Stock"
                               : parseInt(formData.stock) <= 5
-                              ? "Low Stock"
-                              : "In Stock"}
+                                ? "Low Stock"
+                                : "In Stock"}
                           </div>
                         )}
                       </div>
@@ -932,11 +906,10 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                             placeholder="0.00"
                             step="0.01"
                             min="0"
-                            className={`w-full pl-14 pr-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-2xl font-bold ${
-                              errors.price
+                            className={`w-full pl-14 pr-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-2xl font-bold ${errors.price
                                 ? "border-red-300 focus:border-red-500 bg-red-50"
                                 : "border-slate-200 focus:border-emerald-500"
-                            }`}
+                              }`}
                           />
                         </div>
                         {errors.price && (
@@ -963,11 +936,10 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                             placeholder="0.00"
                             step="0.01"
                             min="0"
-                            className={`w-full pl-14 pr-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-2xl font-bold ${
-                              errors.discountPrice
+                            className={`w-full pl-14 pr-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-2xl font-bold ${errors.discountPrice
                                 ? "border-red-300 focus:border-red-500 bg-red-50"
                                 : "border-slate-200 focus:border-emerald-500"
-                            }`}
+                              }`}
                           />
                         </div>
                         {errors.discountPrice && (
@@ -1006,7 +978,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                         <p className="text-slate-400 text-sm font-medium mb-4">Customer sees:</p>
                         <div className="flex items-baseline gap-4">
                           {formData.discountPrice &&
-                          parseFloat(formData.discountPrice) < parseFloat(formData.price) ? (
+                            parseFloat(formData.discountPrice) < parseFloat(formData.price) ? (
                             <>
                               <span className="text-5xl font-bold">Rs {formData.discountPrice}</span>
                               <span className="text-2xl text-slate-500 line-through">
@@ -1125,11 +1097,47 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
 
           <div className="col-span-4 space-y-6">
             <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden sticky top-28">
-              <div className="p-6 border-b border-slate-100">
-                <h3 className="font-bold text-slate-800 flex items-center gap-2">
+
+
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
                   <Eye size={18} className="text-violet-500" />
-                  Live Preview
-                </h3>
+                  <h3 className="font-bold text-slate-800">
+                    Live Preview
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`text-sm font-semibold ${formData.isActive
+                        ? "text-green-600"
+                        : "text-red-600"
+                      }`}
+                  >
+                    {formData.isActive ? "Active" : "InActive"}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        isActive: !prev.isActive,
+                      }))
+                    }
+                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${formData.isActive
+                        ? "bg-green-500"
+                        : "bg-gray-300"
+                      }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${formData.isActive
+                          ? "translate-x-8"
+                          : "translate-x-1"
+                        }`}
+                    />
+                  </button>
+                </div>
               </div>
 
               <div className="p-6">
@@ -1154,9 +1162,8 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                 <div className="space-y-4">
                   {formData.category && (
                     <span
-                      className={`inline-block px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r ${
-                        getCategoryInfo(formData.category)?.color
-                      } text-white`}
+                      className={`inline-block px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r ${getCategoryInfo(formData.category)?.color
+                        } text-white`}
                     >
                       {getCategoryInfo(formData.category)?.icon}{" "}
                       {getCategoryInfo(formData.category)?.label}
@@ -1175,7 +1182,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                     {formData.price ? (
                       <div className="flex items-baseline gap-2">
                         {formData.discountPrice &&
-                        parseFloat(formData.discountPrice) < parseFloat(formData.price) ? (
+                          parseFloat(formData.discountPrice) < parseFloat(formData.price) ? (
                           <>
                             <span className="text-2xl font-bold text-emerald-600">
                               Rs {formData.discountPrice}
@@ -1204,19 +1211,17 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                     <span className="text-sm text-slate-500">Payment Options</span>
                     <div className="flex flex-col items-end gap-1">
                       <span
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                          formData.cod ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                        }`}
+                        className={`px-2 py-1 rounded-md text-xs font-semibold ${formData.cod ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                          }`}
                       >
                         COD: {formData.cod ? "Available" : "Not Available"}
                       </span>
 
                       <span
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                          formData.online
+                        className={`px-2 py-1 rounded-md text-xs font-semibold ${formData.online
                             ? "bg-blue-100 text-blue-700"
                             : "bg-red-100 text-red-700"
-                        }`}
+                          }`}
                       >
                         Online: {formData.online ? "Available" : "Not Available"}
                       </span>
@@ -1227,31 +1232,28 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                     <span className="text-sm text-slate-500">Return Policy</span>
                     <div className="flex flex-col items-end gap-1">
                       <span
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                          formData.isReturnable
+                        className={`px-2 py-1 rounded-md text-xs font-semibold ${formData.isReturnable
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-700"
-                        }`}
+                          }`}
                       >
                         Returnable: {formData.isReturnable ? "Yes" : "No"}
                       </span>
 
                       <span
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                          formData.isReturnable
+                        className={`px-2 py-1 rounded-md text-xs font-semibold ${formData.isReturnable
                             ? "bg-blue-100 text-blue-700"
                             : "bg-red-100 text-red-700"
-                        }`}
+                          }`}
                       >
                         Return Days: {formData.isReturnable ? formData.returnDays : "Not Available"}
                       </span>
 
                       <span
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                          formData.isReturnable
+                        className={`px-2 py-1 rounded-md text-xs font-semibold ${formData.isReturnable
                             ? "bg-blue-100 text-blue-700"
                             : "bg-red-100 text-red-700"
-                        }`}
+                          }`}
                       >
                         Policy Text: {formData.isReturnable ? formData.policyText : "Not Available"}
                       </span>
@@ -1277,13 +1279,12 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
                 <div className="flex justify-between items-center py-2 border-b border-slate-100">
                   <span className="text-slate-500">Stock</span>
                   <span
-                    className={`font-semibold ${
-                      parseInt(formData.stock || "0") > 10
+                    className={`font-semibold ${parseInt(formData.stock || "0") > 10
                         ? "text-emerald-600"
                         : parseInt(formData.stock || "0") > 0
-                        ? "text-amber-600"
-                        : "text-red-600"
-                    }`}
+                          ? "text-amber-600"
+                          : "text-red-600"
+                      }`}
                   >
                     {formData.stock || "0"} units
                   </span>
