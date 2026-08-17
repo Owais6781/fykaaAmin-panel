@@ -51,7 +51,7 @@ export default function ProfileInformation({
             rightIcon={<UserCircle2 className="text-indigo-600" />}
             leftIcon={""}
             title="Profile Information"
-            description="Manage your personal account information."
+            description="Manage  your personal account information."
         >
             <div className="grid md:grid-cols-2 gap-x-4 gap-y-1">
 

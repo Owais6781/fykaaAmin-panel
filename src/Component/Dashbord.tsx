@@ -27,8 +27,8 @@ import { useNavigate } from "react-router-dom";
 import { useGetMyOrdersQuery } from "../api/orderApi";
 import { useGetAllCustomersQuery } from "../api/customerApi";
 import { useGetProductsQuery, } from "../api/product";
-import {useState} from "react";
-
+import { useState } from "react";
+import { useGetSuperAdminProfileQuery, } from "../api/adminAuthApi"
 import OrderModal from "../Component/CustomerInfo/OrderModal";
 
 type OrderItem = {
@@ -39,6 +39,7 @@ type OrderItem = {
 
 type Order = {
     _id: string;
+    userId: string;
     orderId?: string;
     orderStatus: string;
     paymentStatus: string;
@@ -85,10 +86,21 @@ export default function Dashboard() {
 
     const { data: products, } = useGetProductsQuery()
     const { data: customers, } = useGetAllCustomersQuery();
-    const { data, isLoading, isError } = useGetMyOrdersQuery();
+    const { data, } = useGetMyOrdersQuery();
+
+    const { data:admins, isLoading, isError } = useGetSuperAdminProfileQuery();
+
+//   const totalVendor = Vender?.length ?? 0;
+// const totalVendor = Vender?.admins?.length ?? 0;
+// const totalVendor = Vender?.admins?.length ?? 0;
+
+const totalVendor = admins?.data?.length ?? 0;;
 
     const orders: Order[] = Array.isArray(data) ? data : [];
 
+    console.log("products", products)
+    console.log("customers", customers)
+     console.log("totalVender", totalVendor)
 
     const filterOrdersByRange = (orders: any[]) => {
         const now = new Date();
@@ -158,7 +170,14 @@ export default function Dashboard() {
 
 
 
-    const TotalCustomer = customers?.length
+    // const TotalCustomer = customers?.length
+
+
+    const TotalCustomer = new Set(
+        orders
+            .filter(order => order.userId)
+            .map(order => order.userId)
+    ).size;
     const TotalProducts = products?.length
     const totalRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     const totalOrders = orders.length;
@@ -251,26 +270,26 @@ export default function Dashboard() {
 
 
     const handleModal = (order: any) => {
-    setSelectedOrder(order);
-    setOpenModal(true);
-  };
+        setSelectedOrder(order);
+        setOpenModal(true);
+    };
 
-   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="w-20 h-20 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600 mx-auto"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Package size={28} className="text-purple-600" />
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="relative">
+                        <div className="w-20 h-20 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600 mx-auto"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <Package size={28} className="text-purple-600" />
+                        </div>
+                    </div>
+                    <p className="mt-6 text-gray-600 font-medium">Loading Dashboard...</p>
+                    <p className="text-sm text-gray-400 mt-1">Please wait while we fetch your data</p>
+                </div>
             </div>
-          </div>
-          <p className="mt-6 text-gray-600 font-medium">Loading Dashboard...</p>
-          <p className="text-sm text-gray-400 mt-1">Please wait while we fetch your data</p>
-        </div>
-      </div>
-    );
-  }
+        );
+    }
 
 
 
@@ -365,7 +384,7 @@ export default function Dashboard() {
                         iconBg="bg-purple-50"
                         iconColor="text-purple-500"
                         label="Total Vendors"
-                        value="125"
+                        value={totalVendor}
                         change="+8.4%"
                         positive
                         sparkData={sparkData.vendors}
@@ -538,7 +557,7 @@ export default function Dashboard() {
                                 {orders.slice(0, 5).map((order: any) => (
                                     <tr key={order._id} className="border-b border-slate-50 last:border-0">
                                         <td className="py-3.5 text-indigo-600 font-medium text-[13px] cursor-pointer"
-                                         onClick={() => handleModal(order)}>
+                                            onClick={() => handleModal(order)}>
                                             {order.orderId || order._id}
                                         </td>
                                         <td className="py-3.5 text-slate-700 text-[13px]">
@@ -565,8 +584,8 @@ export default function Dashboard() {
                                             </span>
                                         </td>
                                         <td className="py-3.5 text-slate-300 cursor-pointer">
-                                            <MoreHorizontal size={15} 
-                                               onClick={() => handleModal(order)}
+                                            <MoreHorizontal size={15}
+                                                onClick={() => handleModal(order)}
                                             />
                                         </td>
                                     </tr>

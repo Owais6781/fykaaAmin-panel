@@ -1,10 +1,9 @@
 
-import { UserCircle2,Package } from "lucide-react";
+import { UserCircle2,} from "lucide-react";
 import SettingsCard from "../Form/SettingsCard";
 import InputField from "../Form/InputField";
 import UploadField from "../Form/UploadField";
-
-import {Hooks} from "./Hooks"
+import type { ProfileProps } from "./ProfileProps";
 
 const inputClassName =
     `
@@ -25,37 +24,13 @@ const inputClassName =
          hover:border-indigo-300 
         `
 
-export default function StoreInformation() {
-
-     const { formData, user, isLoading } = Hooks();
-
-   
-
-
-      if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="w-20 h-20 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600 mx-auto"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Package size={28} className="text-purple-600" />
-            </div>
-          </div>
-          <p className="mt-6 text-gray-600 font-medium">Loading ...</p>
-          <p className="text-sm text-gray-400 mt-1">Please wait while we fetch your data</p>
-        </div>
-      </div>
-    );
-  }
-
-
+export default function StoreInformation({user}:ProfileProps) {
     return (
         <SettingsCard
             rightIcon={<UserCircle2 className="text-indigo-600" />}
             leftIcon={""}
             title="Profile Information"
-            description="Manage your personal account information."
+            description="Review  your personal account information."
         >
             <div className="grid md:grid-cols-2 gap-x-4 gap-y-1">
 
@@ -63,7 +38,7 @@ export default function StoreInformation() {
                     className={inputClassName}
                     label="Full Name"
                     type="fullName"
-                    value={formData.fullName}
+                    value={user.fullName}
                     readOnly
 
                 />
@@ -72,14 +47,14 @@ export default function StoreInformation() {
                     className={inputClassName}
                     label=" Email"
                     type="email"
-                    value={formData.email}
+                    value={user.email}
                     readOnly
 
                 />
                 <InputField
                     className={inputClassName}
                     label="Phone Number"
-                    value={formData.phone}
+                    value={user.phone}
                     readOnly
 
                 />
@@ -87,14 +62,14 @@ export default function StoreInformation() {
                 <InputField
                     className={inputClassName}
                     label="Status Typer"
-                    value={formData.status}
+                    value={user.status}
                     readOnly
 
                 />
                 <InputField
                     className={inputClassName}
                     label="Address"
-                    value={`${formData.businessAddress},${formData.city},${formData.state}${formData.pincode}`}
+                    value={`${user.businessAddress},${user.city},${user.state}${user.pincode}`}
                     readOnly
 
 
@@ -109,7 +84,15 @@ export default function StoreInformation() {
             </div>
 
             <div className="mt-0">
-                <UploadField />
+                <UploadField 
+                     disabled={true}
+                    label="Store Logo"
+                    value={""}
+                    onChange={() => {
+                        
+                       ;
+                    }}
+                />
             </div>
 
         </SettingsCard>

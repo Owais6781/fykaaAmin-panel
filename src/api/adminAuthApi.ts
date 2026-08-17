@@ -9,26 +9,23 @@ export interface Admin {
   email: string;
   phone: string;
   role: "Admin" | "SuperAdmin";
-
   businessType: string;
   businessName: string;
   businessAddress: string;
   city: string;
   state: string;
   pincode: string;
-
   gstNumber: string;
   panNumber: string;
-
   accountHolderName: string;
   bankName: string;
   accountNumber: string;
   ifscCode: string;
-
   status?:"Pending" | "Approved" | "Rejected";
   KYCVerified: boolean;
   accountMode: boolean;
   vacationMode: boolean;
+   hideOutOfStock: boolean;
   rejectionReason: string;
 
 
@@ -60,6 +57,7 @@ export interface RegisterPayload {
   KYCVerified: boolean;
   accountMode: boolean;
   vacationMode: boolean;
+   hideOutOfStock: boolean;
   rejectionReason: string;
   createdAt?: string;
   updatedAt?: string;
@@ -95,6 +93,7 @@ export interface UpdatePayload {
   KYCVerified: boolean;
   accountMode: boolean;
   vacationMode: boolean;
+  hideOutOfStock: boolean;
   rejectionReason: string;
 
   // documents: {

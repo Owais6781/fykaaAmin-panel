@@ -18,7 +18,7 @@ export default function StorePreferences({
   setFormData,
 }: Props) {
 
-  const toggle = (key: "accountMode" | "KYCVerified" | "vacationMode") => {
+  const toggle = (key: "accountMode" | "KYCVerified" | "vacationMode"|"hideOutOfStock") => {
     setFormData((prev) => ({
       ...prev,
       [key]: !prev[key],
@@ -28,19 +28,10 @@ export default function StorePreferences({
   return (
     <SettingsCard
       title="Store Preferences"
-      description="Configure general preferences for your store."
+      description="Manage your store settings and general preferences."
       rightIcon={<Settings className="text-indigo-600" size={22} />}
       leftIcon={""}
     >
-
-
-      <ToggleSwitch
-        label="KYC Details"
-        description="Display seller verification details."
-        checked={formData.KYCVerified}
-        onChange={() => toggle("KYCVerified")}
-      />
-
 
 
 
@@ -54,35 +45,30 @@ export default function StorePreferences({
 
 
       <ToggleSwitch
+        label="KYC Details"
+        description="Display seller verification details."
+        checked={formData.KYCVerified}
+        onChange={() => toggle("KYCVerified")}
+      />
+
+
+
+
+
+
+      <ToggleSwitch
         label="Vacation Mode"
         description="Hide your products from customers until you turn off Vacation Mode."
         checked={formData.vacationMode}
         onChange={() => toggle("vacationMode")}
       />
 
-
-      {/* 
-  <ToggleSwitch
-        label="Enable Reviews"
-        description="Customers can write reviews."
-        checked={settings.enableReviews}
-        onChange={() => toggle("enableReviews")}
-      />
-
-    
       <ToggleSwitch
-        label="Product Rating"
-        description="Display product ratings."
-        checked={settings.productRating}
-        onChange={() => toggle("productRating")}
+        label="Hide Out of Stock Products"
+        description="Hide out-of-stock products from customers on the website."
+        checked={formData.hideOutOfStock}
+        onChange={() => toggle("hideOutOfStock")}
       />
-
-      <ToggleSwitch
-        label="Show Out of Stock Products"
-        description="Display unavailable products in the store."
-        checked={settings.showOutOfStock}
-        onChange={() => toggle("showOutOfStock")}
-      /> */}
     </SettingsCard>
   );
 }

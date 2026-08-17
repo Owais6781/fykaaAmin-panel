@@ -1,28 +1,14 @@
-// import { useState } from "react";
+
 import { Settings } from "lucide-react";
 import ToggleSwitch from "../Form/ToggleSwitch";
 import SettingsCard from "../Form/SettingsCard";
-import { Hooks } from "./Hooks";
-export default function StorePreferences() {
-  const { formData,  handleToggleSwitch } = Hooks();
-  // const [settings, setSettings] = useState({
+import type { StorePreferencesProps } from "./ProfileProps";
 
-  //   maintenanceMode: false,
-  //   guestCheckout: true,
-  //   enableReviews: true,
-  //   enableWishlist: true,
-  //   newsletter: false,
-  //   productCompare: true,
-  //   productRating: true,
-  //   showOutOfStock: false,
-  // });
 
-  // const toggle = (key: keyof typeof formData) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     [key]: !prev[key],
-  //   }));
-  // };
+export default function StorePreferences({
+  formData,
+  handleToggleSwitch,
+}: StorePreferencesProps) {
 
   return (
     <SettingsCard
@@ -33,14 +19,45 @@ export default function StorePreferences() {
     >
 
 
+
+
       <ToggleSwitch
-        label="Maintenance Mode"
-        description="Enable maintenance mode for your store."
-        checked={formData.vacationMode}
-        // onChange={() => toggle("vacationMode")}
+        label="Account Mode"
+        description="Display seller account status  ."
+        checked={formData.accountMode}
         onChange={handleToggleSwitch}
       />
 
+
+
+      <ToggleSwitch
+        label="KYC Details"
+        description="Display seller verification details."
+        checked={formData.KYCVerified}
+        onChange={handleToggleSwitch}
+      />
+
+
+
+
+
+
+
+      <ToggleSwitch
+        label="Vacation Mode"
+        description="Hide your products from customers until you turn off Vacation Mode."
+        checked={formData.vacationMode}
+        onChange={handleToggleSwitch}
+      />
+
+
+
+      <ToggleSwitch
+        label="Hide Out of Stock Products"
+        description="Hide out-of-stock products from customers on the website."
+        checked={formData.vacationMode}
+        onChange={handleToggleSwitch}
+      />
 
 
 
@@ -58,13 +75,7 @@ export default function StorePreferences() {
         checked={settings.productRating}
         onChange={() => toggle("productRating")}
       /> */}
-      {/* 
-      <ToggleSwitch
-        label="Show Out of Stock Products"
-        description="Display unavailable products in the store."
-        checked={settings.showOutOfStock}
-        onChange={() => toggle("showOutOfStock")}
-      /> */}
+
     </SettingsCard>
   );
 }

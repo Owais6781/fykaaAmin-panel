@@ -10,15 +10,14 @@ import "./App.css";
 import AdminLayout from "./Component/Admin/sidebard";
 import Dashbord from "./Component/Dashbord";
 import Form from "./Component/Invantory/Form.tsx";
-// import Register from "./Component/userRegistation/Registation";
 import Login from "./Component/userRegistation/Login";
 import ViewProduct from "./Component/Invantory/ViewProduct.tsx";
 import Edit from "./Component/Invantory/Edit.tsx";
 import Inventory from "./Component/Invantory/Inventory";
 import Reviews from "./Component/Invantory/Reviews";
 import OrdeList from "./Component/Orderlist";
-import ExportOrdersExcel from "./Component/ExcelDownload/ExcelToDownload";
-import GraphCharts from "./Component/GraphAnalytics/GrapChart";
+import ExcelDownload from "./Component/ExcelDownload/ExcelDownload.tsx";
+
 import Customer from "./Component/CustomerInfo/Customer";
 import ProfileView from "./Component/CustomerInfo/ProfileView";
 import SalesReport from "./Component/Reports/SalesReports";
@@ -30,6 +29,17 @@ import SellerRegister from "./Component/userRegistation/Seller/SellerRegister";
 import RoleAndPermession from "./Component/Admin/SuperAdmin/RoleAndPermession.tsx";
 import ViewSellerInfo from "./Component/Admin/SuperAdmin/View/ViewSellerInfo.tsx";
 import EditSellerInfo from "./Component/Admin/SuperAdmin/Edit/EditSellerInfo.tsx";
+import BannerForm from "./Component/Marketing/Banner/BannerForm.tsx";
+import BannerPage from "./Component/Marketing/Banner/BannerPage.tsx";
+import Payment from "./Component/Setting/Payment/Payment.tsx"
+import Shipping from "./Component/Setting/Shipping/Shipping.tsx"
+import Notification from "./Component/Setting/Notification/Notification.tsx"
+import About from "./Component/Content/About.tsx"
+import ContactPage from "./Component/Content/Contact/ContactPage.tsx"
+import CategoryTable  from "./Component/Invantory/Category/CategoryTable.tsx"
+import CouponsPage  from "./Component/Marketing/Coupons/CouponsPage.tsx"
+
+
 
 
 const ProtectedRoute = () => {
@@ -81,14 +91,23 @@ const App = () => {
               <Route path="form" element={<Form />} />
               <Route path="view/:id" element={<ViewProduct />} />
               <Route path="edit/:id" element={<Edit />} />
-              {/* <Route path="register" element={<Register />} /> */}
-              <Route path="exportExcelOrder" element={<ExportOrdersExcel />} />
-              <Route path="graphChart" element={<GraphCharts />} />
+              <Route path="exportExcelOrder" element={<ExcelDownload/>} />
+              <Route path="Payment" element={<Payment />} />
               <Route path="SalesReport" element={<SalesReport />} />
               <Route path="RevenueReport" element={<RevenueReports />} />
               <Route path="ProductReports" element={<ProductReports/>} />
               <Route path="generalSetting" element={<GeneralSettings/>} />
               <Route path="SellerRegister" element={<SellerRegister/>} />
+              <Route path="BannerForm" element={<BannerForm />} />
+               <Route path="BannerPage" element={<BannerPage />} />
+              <Route path="Shipping" element={<Shipping />} />
+               <Route path="Notification" element={<Notification />} />
+              <Route path="About" element={<About />} />
+                <Route path="Contents" element={< ContactPage/>} />
+                <Route path="CategoryTable" element={<CategoryTable/>} />
+                <Route path="CouponsPage" element={<CouponsPage/>} />
+                       
+
               <Route path="Test" element={<Test />} />
             </Route>
           </Route>

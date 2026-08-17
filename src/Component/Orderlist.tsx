@@ -1,5 +1,7 @@
 
 
+
+
 import MUIDataTable from "mui-datatables";
 import { toast } from "sonner";
 import {
@@ -9,27 +11,33 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
+import type { LucideIcon } from "lucide-react";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PrintIcon from "@mui/icons-material/Print";
-import CloseIcon from "@mui/icons-material/Close";
+
 import {
-  Clock3,
-  CheckCircle2,
-  PackageCheck,
+  Clock,
+  CheckCircle,
+  Package,
   Truck,
   XCircle,
-  ClipboardList,
-  BadgeCheck,
-  Package,
-  RotateCcw,
+  FileText,
+  Shield,
+
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-
   useUpdateOrderStatusMutation,
-  useGetMyOrdersQuery
+  useGetMyOrdersQuery,
 } from "../api/orderApi";
 
+interface OrderCoupon {
+  couponId?: string;
+  code?: string;
+  discountType?: "Flat" | "Percentage" | null;
+  discountValue?: number;
+  discountAmount?: number;
+}
 
 type OrderItem = {
   productId?: string;
@@ -38,7 +46,12 @@ type OrderItem = {
   discountPrice?: number;
   quantity?: number;
   image?: string;
-  category?: string;
+  category: {
+    _id: string;
+    name: string;
+    slug: string;
+    isActive: boolean;
+  };
 };
 
 type Address = {
@@ -58,11 +71,16 @@ type UserInfo = {
 
 type Order = {
   _id: string;
+  sellerId: {
+    businessName: string;
+  };
+  title: string;
+
   orderId?: string;
   transactionId?: string;
-  // category: string;
   orderStatus: string;
   paymentStatus: string;
+   coupon?: OrderCoupon | null;
   totalAmount?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -70,9 +88,8 @@ type Order = {
   paymentMethod?: string;
   userInfo?: UserInfo;
   items?: OrderItem[];
+    subtotal?: number; 
 };
-
-
 
 const orderStatusOptions = [
   "Pending",
@@ -83,36 +100,51 @@ const orderStatusOptions = [
   "Cancelled",
 ];
 
+export default function OrderListProfessional() {
+  const { data, isLoading, isError, refetch } = useGetMyOrdersQuery(
+    undefined,
+    {
+      pollingInterval: 5000,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    }
+  );
 
+  const admin = JSON.parse(localStorage.getItem("admin") || "{}");
+  const SuperAdmin = admin.role === "SuperAdmin";
 
-export default function OrderList() {
-
-
-
-  const { data, isLoading, isError, refetch } = useGetMyOrdersQuery(undefined, {
-    pollingInterval: 5000, // har 5 sec me refresh
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-  })
-
-  const [updateOrderStatus, { isLoading: isUpdating }] =  useUpdateOrderStatusMutation();
-  
+  const [updateOrderStatus, { isLoading: isUpdating }] =
+    useUpdateOrderStatusMutation();
 
   const orders: Order[] = Array.isArray(data) ? data : [];
 
 
+  const tableData = orders.map((order) => ({
+    ...order,
+
+    product: order.items?.map((i) => i.title).join(", ") || "",
+
+    category: order.items?.map((i) => i.category?.name).join(", ") || "",
+    customer: order.userInfo?.fullName || "",
+
+    Vendor: order.sellerId?.businessName || "",
+  }));
+
+
+
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [open, setOpen] = useState(false);
- 
-  const prevOrderCountRef = useRef(0);
 
- 
- 
+  const prevOrderCountRef = useRef(0);
+  const Api = import.meta.env.VITE_API_URL as string;
+
+  const getImageUrl = (productId: string, index: number = 0) => {
+    return `${Api}/api/${productId}/img/${index}`;
+  };
 
   useEffect(() => {
     if (!orders.length) {
       prevOrderCountRef.current = 0;
-     
       return;
     }
 
@@ -121,17 +153,20 @@ export default function OrderList() {
       orders.length > prevOrderCountRef.current
     ) {
       const newOrdersCount = orders.length - prevOrderCountRef.current;
-
-     
-
-      toast.success("New Order Received", {
-        description: `${newOrdersCount} new order${newOrdersCount > 1 ? "s" : ""
-          } arrived`,
+      const latestOrder = orders[0];
+      const toastId = toast.success("New order received", {
+        description: `${latestOrder.orderId}${newOrdersCount} new order${newOrdersCount > 1 ? "s" : ""
+          } arrived at ${new Date().toLocaleTimeString("en-IN")}`,
+        duration: Infinity,
       });
+      setTimeout(() => {
+        toast.dismiss(toastId);
+      }, 3000);
     }
 
     prevOrderCountRef.current = orders.length;
   }, [orders]);
+
   const handleOpen = (order: Order) => {
     setSelectedOrder(order);
     setOpen(true);
@@ -152,30 +187,34 @@ export default function OrderList() {
             <title>Print Order</title>
             <style>
               body {
-                font-family: Arial, sans-serif;
-                padding: 20px;
-                line-height: 1.8;
-                color: #111;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+                padding: 24px;
+                line-height: 1.6;
+                color: #111827;
               }
-              h2, h3 {
-                margin-bottom: 10px;
-              }
-              p {
-                margin: 6px 0;
-              }
+              h2 { font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+              h3 { font-size: 14px; font-weight: 600; margin-top: 20px; margin-bottom: 12px; color: #374151; }
+              p { margin: 4px 0; font-size: 14px; }
+              .section { margin-bottom: 24px; }
               table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 10px;
-              }
-              th, td {
-                border: 1px solid #ddd;
-                padding: 8px;
-                text-align: left;
+                margin-top: 12px;
+                font-size: 13px;
               }
               th {
-                background: #f5f5f5;
+                background: #F3F4F6;
+                padding: 10px;
+                text-align: left;
+                font-weight: 600;
+                border-bottom: 1px solid #E5E7EB;
               }
+              td {
+                padding: 10px;
+                border-bottom: 1px solid #E5E7EB;
+              }
+              tr:last-child td { border-bottom: none; }
+              .label { color: #6B7280; font-weight: 500; display: inline-block; width: 120px; }
             </style>
           </head>
           <body>
@@ -192,23 +231,47 @@ export default function OrderList() {
     }
   };
 
-  const getOrderStatusStyle = (value: string) => {
-    switch (value) {
-      case "Pending":
-        return "bg-yellow-100 text-yellow-700";
-      case "Confirmed":
-        return "bg-blue-100 text-blue-700";
-      case "Processing":
-        return "bg-purple-100 text-purple-700";
-      case "Shipped":
-        return "bg-indigo-100 text-indigo-700";
-      case "Delivered":
-        return "bg-green-100 text-green-700";
-      case "Cancelled":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-gray-100 text-gray-600";
-    }
+  const getOrderStatusConfig = (status: string) => {
+    const configs: Record<string, any> = {
+      Pending: {
+        bgColor: "#FEF3C7",
+        textColor: "#92400E",
+        borderColor: "#FBBF24",
+        icon: Clock,
+      },
+      Confirmed: {
+        bgColor: "#DBEAFE",
+        textColor: "#1E40AF",
+        borderColor: "#3B82F6",
+        icon: Shield,
+      },
+      Processing: {
+        bgColor: "#EDE9FE",
+        textColor: "#5B21B6",
+        borderColor: "#8B5CF6",
+        icon: Package,
+      },
+      Shipped: {
+        bgColor: "#CFFAFE",
+        textColor: "#0C4A6E",
+        borderColor: "#06B6D4",
+        icon: Truck,
+      },
+      Delivered: {
+        bgColor: "#DCFCE7",
+        textColor: "#166534",
+        borderColor: "#10B981",
+        icon: CheckCircle,
+      },
+      Cancelled: {
+        bgColor: "#FEE2E2",
+        textColor: "#991B1B",
+        borderColor: "#EF4444",
+        icon: XCircle,
+      },
+    };
+
+    return configs[status] || configs["Pending"];
   };
 
   const stats = useMemo(() => {
@@ -225,7 +288,7 @@ export default function OrderList() {
   }, [orders]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
-    const loadingToast = toast.loading("Updating order...");
+    const loadingToast = toast.loading("Updating order status...");
 
     try {
       let newPaymentStatus: string | undefined;
@@ -234,13 +297,13 @@ export default function OrderList() {
         newPaymentStatus = "Paid";
       }
 
-      const result = await updateOrderStatus({
+      await updateOrderStatus({
         id: orderId,
         orderStatus: newStatus,
         paymentStatus: newPaymentStatus,
       }).unwrap();
 
-      toast.success("Order Updated", {
+      toast.success("Order updated", {
         id: loadingToast,
         description: `Status changed to ${newStatus}`,
       });
@@ -259,11 +322,9 @@ export default function OrderList() {
               : selectedOrder.deliveredAt,
         });
       }
-
-      console.log("UPDATE SUCCESS:", result);
     } catch (error) {
       console.error("Status update failed:", error);
-      toast.error("Update Failed", {
+      toast.error("Update failed", {
         id: loadingToast,
       });
     }
@@ -271,12 +332,56 @@ export default function OrderList() {
 
   const columns = [
     {
+      name: "product",
+      label: "Product",
+      options: {
+        customBodyRenderLite: (dataIndex: number) => {
+          const order = orders[dataIndex];
+          return (
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+                <img
+
+                  src={
+                    order.items?.[0]?.productId
+                      ? getImageUrl(order.items[0].productId, 0)
+                      : "/placeholder.png"
+                  }
+                  alt={order.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+
+              </div>
+              <div>
+                <p className="font-medium text-slate-900 line-clamp-1">
+                  {order?.items?.[0]?.title || "Untitled Product"}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {order?.items?.[0]?.category?.name || "Uncategorized"}
+                </p>
+              </div>
+            </div>
+          );
+        },
+      },
+    },
+
+    {
       name: "orderId",
       label: "Order ID",
       options: {
         customBodyRenderLite: (dataIndex: number) => {
           const order = orders[dataIndex];
-          return order?.orderId || order?._id || "N/A";
+          return (
+            <span className="font-medium text-slate-900 cursor-pointer"
+              onClick={() => handleOpen(order)}>
+              {order?.orderId || order?._id || "N/A"}
+
+            </span>
+          );
         },
       },
     },
@@ -286,75 +391,106 @@ export default function OrderList() {
       options: {
         customBodyRenderLite: (dataIndex: number) => {
           const order = orders[dataIndex];
-          return order?.transactionId || "N/A";
+          return (
+            <span className="font-mono text-sm text-slate-600">
+              {order?.transactionId || "—"}
+            </span>
+          );
         },
       },
     },
+
+    ...(SuperAdmin
+      ? [
+        {
+          name: "Vendor",
+          label: "Vendor",
+          options: {
+            customBodyRenderLite: (dataIndex: number) => {
+              const order = orders[dataIndex];
+              return (
+                <div>
+
+                  <p className="font-medium text-slate-900">
+                    {order?.sellerId?.businessName || "N/A"}
+                  </p>
+
+                </div>
+              );
+            },
+          },
+        },
+      ]
+      : []),
     {
       name: "customer",
       label: "Customer",
       options: {
         customBodyRenderLite: (dataIndex: number) => {
           const order = orders[dataIndex];
-          return order?.userInfo?.fullName || "N/A";
+          return (
+            <div>
+              <p className="font-medium text-slate-900">
+                {order?.userInfo?.fullName || "N/A"}
+              </p>
+              <p className="text-sm text-slate-500">
+                {order?.userInfo?.email || "—"}
+              </p>
+            </div>
+          );
         },
       },
     },
-     {
-      name: "Product",
-      label: "Product",
-      options: {
-        customBodyRenderLite: (dataIndex: number) => {
-          const order = orders[dataIndex];
-         return order?.items?.[0]?.category || "N/A";
-        },
-      },
-    },
+
     {
       name: "createdAt",
       label: "Order Date",
       options: {
-        customBodyRender: (value: string) =>
-          value
-            ? new Date(value).toLocaleDateString("en-IN", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            })
-            : "N/A",
+        customBodyRender: (value: string) => {
+          if (!value) return "—";
+          const date = new Date(value).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+          return <span className="text-slate-700">{date}</span>;
+        },
       },
     },
     {
       name: "totalAmount",
-      label: "Total",
+      label: "Total Amount",
       options: {
-        customBodyRender: (value: number) => `₹${value || 0}`,
+        customBodyRender: (value: number) => (
+          <span className="font-semibold text-slate-900">
+            ₹{(value || 0).toLocaleString("en-IN")}
+          </span>
+        ),
       },
     },
     {
       name: "paymentMethod",
-      label: "Method",
+      label: "Payment Method",
       options: {
-        customBodyRender: (value: string) => value || "N/A",
+        customBodyRender: (value: string) => (
+          <span className="text-slate-700">{value || "—"}</span>
+        ),
       },
     },
     {
       name: "paymentStatus",
-      label: "Payment",
+      label: "Payment Status",
       options: {
         customBodyRender: (value: string) => {
-          const style =
-            value === "Paid"
-              ? "bg-green-100 text-green-700"
-              : value === "Failed"
-                ? "bg-red-100 text-red-700"
-                : "bg-yellow-100 text-yellow-700";
-
+          const isPaid = value === "Paid";
           return (
             <span
-              className={`px-3 py-1 rounded-full text-xs font-semibold ${style}`}
+              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${isPaid
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-amber-50 text-amber-700 border border-amber-200"
+                }`}
             >
-              {value}
+              {value || "—"}
             </span>
           );
         },
@@ -366,22 +502,32 @@ export default function OrderList() {
       options: {
         customBodyRenderLite: (dataIndex: number) => {
           const order = orders[dataIndex];
+          const config = getOrderStatusConfig(order.orderStatus);
+          const StatusIcon = config.icon;
 
           return (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-[180px]">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${getOrderStatusStyle(
-                  order.orderStatus
-                )}`}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border"
+                style={{
+                  backgroundColor: config.bgColor,
+                  borderColor: config.borderColor,
+                }}
               >
-                {order.orderStatus}
-              </span>
+                <StatusIcon size={16} style={{ color: config.textColor }} />
+                <span
+                  style={{ color: config.textColor }}
+                  className="text-xs font-medium"
+                >
+                  {order.orderStatus}
+                </span>
+              </div>
 
               <select
                 value={order.orderStatus}
                 disabled={isUpdating}
                 onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm bg-white"
+                className="px-2 py-1 text-sm border border-slate-300 rounded-lg bg-white text-slate-900 hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {orderStatusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -396,16 +542,28 @@ export default function OrderList() {
     },
     {
       name: "actions",
-      label: "View",
+      label: "Action",
       options: {
         customBodyRenderLite: (dataIndex: number) => {
           const order = orders[dataIndex];
           return (
             <Button
-              variant="contained"
+              variant="outlined"
               size="small"
               startIcon={<VisibilityIcon />}
               onClick={() => handleOpen(order)}
+              sx={{
+                textTransform: "none",
+                fontWeight: 500,
+                fontSize: "13px",
+                borderColor: "#D1D5DB",
+                color: "#1F2937",
+                "&:hover": {
+                  borderColor: "#3B82F6",
+                  backgroundColor: "rgba(59, 130, 246, 0.04)",
+                  color: "#1E40AF",
+                },
+              }}
             >
               View
             </Button>
@@ -419,20 +577,21 @@ export default function OrderList() {
     selectableRows: "none" as const,
     responsive: "vertical" as const,
     elevation: 0,
+    rowsPerPage: 10,
+    rowsPerPageOptions: [5, 10, 25],
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="relative">
-            <div className="w-20 h-20 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600 mx-auto"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Package size={28} className="text-purple-600" />
-            </div>
-          </div>
-          <p className="mt-6 text-gray-600 font-medium">Loading OrderBook...</p>
-          <p className="text-sm text-gray-400 mt-1">Please wait while we fetch your data</p>
+          <div className="w-16 h-16 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin mx-auto mb-6"></div>
+          <p className="text-slate-700 font-medium text-lg">
+            Loading orders...
+          </p>
+          <p className="text-slate-500 text-sm mt-2">
+            Please wait while we fetch your data
+          </p>
         </div>
       </div>
     );
@@ -440,270 +599,284 @@ export default function OrderList() {
 
   if (isError) {
     return (
-            <div className="min-h-screen flex flex-col items-center justify-center px-4">
-                <div className="text-center">
-                    <div className="text-6xl mb-4">📡</div>
-
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                        No Internet Connection
-                    </h2>
-
-                    <p className="text-slate-500 mb-6">
-                        Please check your network and try again.
-                    </p>
-
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-                    >
-                        Retry
-                    </button>
-                </div>
-            </div>
-        );
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <XCircle size={32} className="text-red-600" />
+          </div>
+          <h2 className="text-2xl font-semibold text-slate-900 mb-2">
+            Connection error
+          </h2>
+          <p className="text-slate-600 mb-6">
+            Unable to load orders. Please check your connection and try again.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 font-medium text-sm"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const StatCard = ({
     title,
     value,
-    icon,
-    iconBg,
-    lineColor,
-    badge,
+    icon: Icon,
+    label,
   }: {
     title: string;
     value: number;
-    icon: React.ReactNode;
-    iconBg: string;
-    lineColor: string;
-    badge?: string;
+    icon: LucideIcon;
+    label: string;
   }) => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 min-h-[150px]">
-      <div className="flex items-start justify-between">
+    <div className="bg-white border border-slate-200 rounded-lg p-5">
+      <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <h3 className="text-3xl font-bold text-slate-800 mt-3">{value}</h3>
-          {badge && (
-            <div className="mt-4 inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-              {badge}
-            </div>
-          )}
+          <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">
+            {title}
+          </p>
+          <h3 className="text-3xl font-semibold text-slate-900 mt-2">
+            {value}
+          </h3>
         </div>
-
-        <div
-          className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md ${iconBg}`}
-        >
-          {icon}
+        <div className="p-2.5 bg-slate-100 rounded-lg">
+          <Icon size={20} className="text-slate-700" />
         </div>
       </div>
-
-      <div className="mt-6 h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${lineColor} w-3/4`} />
-      </div>
+      <p className="text-xs text-slate-500">{label}</p>
     </div>
   );
 
   return (
-    <div className=" min-h-screen  p-4">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Header Section */}
+      <div className="border-b border-slate-200 bg-white sticky top-0 z-10">
+        <div className="px-6 py-5 flex items-center justify-between">
+          {/* Left Side */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <FileText size={20} className="text-slate-900" />
+              <h1 className="text-2xl font-semibold text-slate-900">
+                Order Management
+              </h1>
+            </div>
 
-      {/* Top Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7 gap-4 mb-6 p-6">
-        <StatCard
-          title="Total Orders"
-          value={stats.total}
-          icon={<ClipboardList size={28} />}
-          iconBg="bg-gradient-to-br from-violet-500 to-purple-600"
-          lineColor="bg-violet-500"
-          badge="All Orders"
-        />
+            <p className="text-sm text-slate-600">
+              Manage and track all customer orders
+            </p>
+          </div>
 
-        <StatCard
-          title="Pending"
-          value={stats.pending}
-          icon={<Clock3 size={28} />}
-          iconBg="bg-gradient-to-br from-yellow-400 to-orange-500"
-          lineColor="bg-yellow-500"
-          badge="Need Action"
-        />
+          {/* Right Side - Hardcoded Cancel Orders */}
 
-        <StatCard
-          title="Confirmed"
-          value={stats.confirmed}
-          icon={<BadgeCheck size={28} />}
-          iconBg="bg-gradient-to-br from-blue-500 to-cyan-500"
-          lineColor="bg-blue-500"
-          badge="Approved"
-        />
+          <div className="flex flex-col items-center">
+            <div className="w-10 h-10 rounded-full bg-red-100 border-2 border-red-500 flex items-center justify-center">
+              <span className="text-xl font-bold text-red-600">
+                {stats.cancelled}
+              </span>
+            </div>
 
-        <StatCard
-          title="Processing"
-          value={stats.processing}
-          icon={<PackageCheck size={28} />}
-          iconBg="bg-gradient-to-br from-purple-500 to-fuchsia-500"
-          lineColor="bg-purple-500"
-          badge="In Progress"
-        />
-
-        <StatCard
-          title="Shipped"
-          value={stats.shipped}
-          icon={<Truck size={28} />}
-          iconBg="bg-gradient-to-br from-indigo-500 to-blue-500"
-          lineColor="bg-indigo-500"
-          badge="On The Way"
-        />
-
-        <StatCard
-          title="Delivered"
-          value={stats.delivered}
-          icon={<CheckCircle2 size={28} />}
-          iconBg="bg-gradient-to-br from-green-500 to-emerald-500"
-          lineColor="bg-green-500"
-          badge="Completed"
-        />
-
-        <StatCard
-          title="Cancelled"
-          value={stats.cancelled}
-          icon={<XCircle size={28} />}
-          iconBg="bg-gradient-to-br from-red-500 to-rose-500"
-          lineColor="bg-red-500"
-          badge="Stopped"
-        />
-        <StatCard
-          title="Retuned "
-          value={stats.returned}
-          icon={<RotateCcw size={28} />}
-          iconBg="bg-gradient-to-br from-yellow-400 to-amber-500"
-          lineColor="bg-amber-500"
-          badge="Retun"
-        />
+            <p className="mt-2 text-sm font-medium text-gray-600">
+              Cancelled
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Table */}
-      
-      <div className="w-full  max-w-full bg-white rounded-xl shadow p-6 sm:p-4 overflow-hidden">
-        <MUIDataTable
-          title={"Order Management"}
-          data={orders}
-          columns={columns}
-          options={options}
-        />
+      {/* Stats Section */}
+      <div className="px-6 py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard
+            title="Total Orders"
+            value={stats.total}
+            icon={FileText}
+            label="All orders"
+          />
+          <StatCard
+            title="Pending"
+            value={stats.pending}
+            icon={Clock}
+            label="Awaiting action"
+          />
+          <StatCard
+            title="In Transit"
+            value={stats.shipped}
+            icon={Truck}
+            label="Shipped orders"
+          />
+          <StatCard
+            title="Delivered"
+            value={stats.delivered}
+            icon={CheckCircle}
+            label="Completed orders"
+          />
+
+
+        </div>
+
+        {/* Table Section */}
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+          <MUIDataTable
+            title=""
+            data={tableData}
+            columns={columns}
+            options={options}
+          />
+        </div>
       </div>
 
       {/* Order Details Dialog */}
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
-        <DialogTitle>Order Details</DialogTitle>
+        <DialogTitle className="text-lg font-semibold text-slate-900 bg-slate-50 border-b border-slate-200">
+          Order Details
+        </DialogTitle>
 
-        <DialogContent dividers>
+        <DialogContent dividers className="bg-white">
           {selectedOrder && (
-            <div id="print-section" className="space-y-2 text-sm leading-7">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p>
-                    <b>Order ID:</b> {selectedOrder.orderId || "N/A"}
-                  </p>
-                  <p>
-                    <b>Transaction ID:</b> {selectedOrder.transactionId || "N/A"}
-                  </p>
-                  <p>
-                    <b>Total:</b> ₹{selectedOrder.totalAmount || 0}
-                  </p>
-                  <p>
-                    <b>Payment Method:</b> {selectedOrder.paymentMethod || "N/A"}
-                  </p>
-                  <p>
-                    <b>Payment Status:</b> {selectedOrder.paymentStatus || "N/A"}
-                  </p>
-                  <p>
-                    <b>Order Status:</b> {selectedOrder.orderStatus || "N/A"}
-                  </p>
+            <div id="print-section" className="space-y-6">
+              {/* Order & Payment Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-slate-900 text-sm uppercase tracking-wide">
+                    Order Information
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <p className="text-slate-600">Order ID</p>
+                      <p className="font-medium text-slate-900">
+                        {selectedOrder.orderId || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600">Transaction ID</p>
+                      <p className="font-mono text-slate-700">
+                        {selectedOrder.transactionId || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600">Order Date</p>
+                      <p className="text-slate-900">
+                        {selectedOrder.createdAt
+                          ? new Date(selectedOrder.createdAt).toLocaleDateString(
+                            "en-IN",
+                            {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                            }
+                          )
+                          : "N/A"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p>
-                    <b>Customer:</b> {selectedOrder.userInfo?.fullName || "N/A"}
-                  </p>
-                  <p>
-                    <b>Email:</b> {selectedOrder.userInfo?.email || "N/A"}
-                  </p>
-                  <p>
-                    <b>Phone:</b> {selectedOrder.userInfo?.phone || "N/A"}
-                  </p>
-                  <p>
-                    <b>Order Date:</b>{" "}
-                    {selectedOrder.createdAt
-                      ? new Date(selectedOrder.createdAt).toLocaleDateString(
-                        "en-IN",
-                        {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        }
-                      )
-                      : "N/A"}
-                  </p>
-                  <p>
-                    <b>Delivered Date:</b>{" "}
-                    {selectedOrder.deliveredAt
-                      ? new Date(selectedOrder.deliveredAt).toLocaleDateString(
-                        "en-IN",
-                        {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        }
-                      )
-                      : selectedOrder.orderStatus === "Delivered" &&
-                        selectedOrder.updatedAt
-                        ? new Date(selectedOrder.updatedAt).toLocaleDateString(
-                          "en-IN",
-                          {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          }
-                        )
-                        : "Not Delivered Yet"}
-                  </p>
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-slate-900 text-sm uppercase tracking-wide">
+                    Payment Status
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <p className="text-slate-600">Total Amount</p>
+                      <p className="text-2xl font-semibold text-slate-900">
+                        ₹{(selectedOrder.totalAmount || 0).toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4 pt-2">
+                      <div>
+                        <p className="text-slate-600 text-xs uppercase">
+                          Payment
+                        </p>
+                        <p
+                          className={`font-medium text-sm ${selectedOrder.paymentStatus === "Paid"
+                            ? "text-green-700"
+                            : "text-amber-700"
+                            }`}
+                        >
+                          {selectedOrder.paymentStatus || "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-600 text-xs uppercase">
+                          Method
+                        </p>
+                        <p className="font-medium text-slate-900">
+                          {selectedOrder.paymentMethod || "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-4 space-y-1">
-                <h3 className="font-bold">Address</h3>
-                <p>{selectedOrder.userInfo?.address?.line1 || "N/A"}</p>
-                <p>
-                  {selectedOrder.userInfo?.address?.city || ""}{" "}
-                  {selectedOrder.userInfo?.address?.state || ""}
-                </p>
-                <p>{selectedOrder.userInfo?.address?.pincode || ""}</p>
-                <p>{selectedOrder.userInfo?.address?.country || ""}</p>
+              {/* Customer Info */}
+              <div className="border-t border-slate-200 pt-6">
+                <h3 className="font-semibold text-slate-900 text-sm uppercase tracking-wide mb-4">
+                  Customer Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-slate-600 uppercase">Name</p>
+                      <p className="font-medium text-slate-900 mt-1">
+                        {selectedOrder.userInfo?.fullName || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 uppercase">Email</p>
+                      <p className="text-sm text-slate-900 mt-1">
+                        {selectedOrder.userInfo?.email || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 uppercase">Phone</p>
+                      <p className="font-medium text-slate-900 mt-1">
+                        {selectedOrder.userInfo?.phone || "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-slate-600 uppercase">
+                        Delivery Address
+                      </p>
+                      <div className="mt-1 text-sm text-slate-900">
+                        <p>{selectedOrder.userInfo?.address?.line1 || "—"}</p>
+                        <p>
+                          {selectedOrder.userInfo?.address?.city || ""}{" "}
+                          {selectedOrder.userInfo?.address?.state || ""}
+                        </p>
+                        <p>{selectedOrder.userInfo?.address?.pincode || ""}</p>
+                        <p>{selectedOrder.userInfo?.address?.country || ""}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-4">
-                <h3 className="font-bold">Product Information</h3>
-
+              {/* Products Table */}
+              <div className="border-t border-slate-200 pt-6">
+                <h3 className="font-semibold text-slate-900 text-sm uppercase tracking-wide mb-4">
+                  Order Items
+                </h3>
                 {selectedOrder.items?.length ? (
-                  <div className=" overflow-hidden border rounded-lg mt-2">
-                    <table className="min-w-full text-sm">
-                      <thead className="bg-gradient-to-r from-gray-800 to-gray-700 text-white text-sm uppercase">
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
-                          <th className="px-5 py-3 text-left font-semibold tracking-wide">
-                            Title
+                          <th className="px-4 py-3 text-left font-semibold text-slate-900">
+                            Product
                           </th>
-                          <th className="px-5 py-3 text-left font-semibold tracking-wide">
-                            Category
-                          </th>
-                          <th className="px-5 py-3 text-left font-semibold tracking-wide">
+                          <th className="px-4 py-3 text-left font-semibold text-slate-900">
                             Price
                           </th>
-                          <th className="px-5 py-3 text-left font-semibold tracking-wide">
-                            Discount Price
+                          <th className="px-4 py-3 text-center font-semibold text-slate-900">
+                            Qty
                           </th>
-                          <th className="px-5 py-3 text-center font-semibold tracking-wide">
-                            Quantity
-                          </th>
-                          <th className="px-5 py-3 text-right font-semibold tracking-wide">
+                          <th className="px-4 py-3 text-right font-semibold text-slate-900">
                             Total
                           </th>
                         </tr>
@@ -716,57 +889,216 @@ export default function OrderList() {
                               : item.price || 0;
 
                           return (
-                            <tr key={i} className="border-t border-gray-200">
+                            <tr
+                              key={i}
+                              className="border-b border-slate-200 hover:bg-slate-50"
+                            >
                               <td className="px-4 py-3">
-                                {item.title || "Product"}
+                                <div>
+                                  <p className="font-medium text-slate-900">
+                                    {item.title || "Product"}
+                                  </p>
+                                  <p className="text-xs text-slate-500">
+                                    {item.category?.name || "—"}
+                                  </p>
+                                </div>
                               </td>
                               <td className="px-4 py-3">
-                                {item.category || "N/A"}
+                                <div>
+                                  {item.discountPrice &&
+                                    item.discountPrice > 0 ? (
+                                    <>
+                                      <p className="font-medium text-slate-900">
+                                        ₹{item.discountPrice}
+                                      </p>
+                                      <p className="text-xs text-slate-500 line-through">
+                                        ₹{item.price || 0}
+                                      </p>
+                                    </>
+                                  ) : (
+                                    <p className="font-medium text-slate-900">
+                                      ₹{item.price || 0}
+                                    </p>
+                                  )}
+                                </div>
                               </td>
-                              <td className="px-4 py-3">₹{item.price || 0}</td>
-                              <td className="px-4 py-3">
-                                ₹{item.discountPrice || 0}
-                              </td>
-                              <td className="px-4 py-3 text-center">
+                              <td className="px-4 py-3 text-center font-medium text-slate-900">
                                 {item.quantity || 1}
                               </td>
-                              <td className="px-4 py-3 text-right font-semibold">
-                                ₹{finalPrice * (item.quantity || 1)}
+                              <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                                ₹
+                                {(finalPrice * (item.quantity || 1)).toLocaleString(
+                                  "en-IN"
+                                )}
                               </td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
+
+                    {/* Coupon & Price Summary */}
+<div className="border-t border-slate-200 pt-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    {/* Coupon Information */}
+    <div>
+      <h3 className="font-semibold text-slate-900 text-sm uppercase tracking-wide mb-4">
+        Coupon Discount
+      </h3>
+
+      {selectedOrder.coupon?.couponId ? (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+          <div className="flex items-center justify-between gap-4">
+
+            <div>
+              <p className="text-xs text-slate-500 uppercase">
+                Coupon Code
+              </p>
+
+              <p className="mt-1 text-lg font-bold text-green-700">
+                🎟️ {selectedOrder.coupon.code}
+              </p>
+
+              <p className="mt-1 text-sm text-slate-600">
+                {selectedOrder.coupon.discountType === "Percentage"
+                  ? `${selectedOrder.coupon.discountValue}% OFF`
+                  : `₹${selectedOrder.coupon.discountValue} OFF`}
+              </p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-xs text-slate-500 uppercase">
+                Discount
+              </p>
+
+              <p className="mt-1 text-xl font-bold text-green-600">
+                -₹
+                {Number(
+                  selectedOrder.coupon.discountAmount || 0
+                ).toLocaleString("en-IN")}
+              </p>
+            </div>
+
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">
+            No coupon applied
+          </p>
+        </div>
+      )}
+    </div>
+
+    {/* Price Summary */}
+    <div>
+      <h3 className="font-semibold text-slate-900 text-sm uppercase tracking-wide mb-4">
+        Price Summary
+      </h3>
+
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+
+        {/* Subtotal */}
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-slate-600">
+            Subtotal
+          </span>
+
+          <span className="font-medium text-slate-900">
+            ₹
+            {Number(
+              selectedOrder.subtotal || 0
+            ).toLocaleString("en-IN")}
+          </span>
+        </div>
+
+        {/* Coupon */}
+        {Number(selectedOrder.coupon?.discountAmount || 0) > 0 && (
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-green-600">
+              Coupon Discount
+            </span>
+
+            <span className="font-semibold text-green-600">
+              -₹
+              {Number(
+                selectedOrder.coupon?.discountAmount
+              ).toLocaleString("en-IN")}
+            </span>
+          </div>
+        )}
+
+        {/* Divider */}
+        <div className="border-t border-slate-200 pt-3">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-slate-900">
+              Total Amount
+            </span>
+
+            <span className="text-2xl font-bold text-slate-900">
+              ₹
+              {Number(
+                selectedOrder.totalAmount || 0
+              ).toLocaleString("en-IN")}
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
                   </div>
                 ) : (
-                  <p>No items</p>
+                  <p className="text-slate-600">No items found</p>
                 )}
               </div>
             </div>
           )}
+
+
+
+          
         </DialogContent>
 
-        <DialogActions>
+        <DialogActions className="bg-slate-50 border-t border-slate-200 px-6 py-4">
           <Button
-            variant="outlined"
-            color="inherit"
-            startIcon={<CloseIcon />}
             onClick={handleClose}
+            sx={{
+              textTransform: "none",
+              color: "#6B7280",
+              "&:hover": {
+                backgroundColor: "rgba(0,0,0,0.04)",
+              },
+            }}
           >
             Close
           </Button>
-
           <Button
-            variant="contained"
-            color="primary"
-            startIcon={<PrintIcon />}
             onClick={handlePrint}
+            variant="contained"
+            startIcon={<PrintIcon />}
+            sx={{
+              textTransform: "none",
+              backgroundColor: "#1F2937",
+              color: "white",
+              fontWeight: 500,
+              "&:hover": {
+                backgroundColor: "#111827",
+              },
+            }}
           >
-            Print
+            Print Order
           </Button>
         </DialogActions>
       </Dialog>
+
+
+
+
+      
     </div>
   );
 }

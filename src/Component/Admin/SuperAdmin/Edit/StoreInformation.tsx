@@ -31,12 +31,12 @@ const inputClassName =
         `
 
 const businessTypeOptions = [
-    "Individual",
-    "Proprietorship",
-    "Partnership",
-    "LLP",
-    "Private Limited",
-    "Public Limited",
+  "Individual",
+  "Proprietorship",
+  "Partnership",
+  "LLP",
+  "Private Limited",
+  "Public Limited",
 ];
 
 
@@ -52,7 +52,7 @@ export default function StoreInformation({ formData,
       rightIcon={<Store className="text-indigo-600" />}
       leftIcon={""}
       title="Store Information"
-      description="Update your store details."
+      description="Manage  your store details."
 
     >
 
@@ -76,7 +76,7 @@ export default function StoreInformation({ formData,
           label="Store  Type"
           name="businessName"
           value={formData.businessType}
-         options={businessTypeOptions}
+          options={businessTypeOptions}
 
         />
 
@@ -138,24 +138,6 @@ export default function StoreInformation({ formData,
 
         <InputField
           className={inputClassName}
-          label="GST Number"
-          name="gstNumber"
-          value={formData.gstNumber}
-          onChange={handleChange}
-
-        />
-
-        <InputField
-          className={inputClassName}
-          label=" Pan Number"
-          name="panNumber"
-          value={formData.panNumber}
-          onChange={handleChange}
-
-        />
-
-        <InputField
-          className={inputClassName}
           label="Account Holder Name"
           type="accountHolderName"
           name="accountHolderName"
@@ -193,14 +175,25 @@ export default function StoreInformation({ formData,
         />
 
         <InputField
-          className={`${inputClassName} ${formData.KYCVerified
-            ? "bg-green-100 text-green-700"
-            : "bg-gray-100 text-red-700"
-            }`}
+          className={inputClassName}
+          label="GST Number"
+          name="gstNumber"
+          value={formData.gstNumber}
+          onChange={handleChange}
 
-          label=" KYC Details"
-          value={formData.KYCVerified ? "Verified" : "Not Verified"}
         />
+
+        <InputField
+          className={inputClassName}
+          label=" Pan Number"
+          name="panNumber"
+          value={formData.panNumber}
+          onChange={handleChange}
+
+        />
+
+
+
         <InputField
           className={`${inputClassName} ${formData.accountMode
             ? "bg-green-100 text-green-700"
@@ -212,6 +205,17 @@ export default function StoreInformation({ formData,
           value={formData.accountMode ? "Active" : "Suspended"}
 
         />
+
+        <InputField
+          className={`${inputClassName} ${formData.KYCVerified
+            ? "bg-green-100 text-green-700"
+            : "bg-gray-100 text-red-700"
+            }`}
+
+          label=" KYC Details"
+          value={formData.KYCVerified ? "Verified" : "Not Verified"}
+        />
+
 
       </div>
 

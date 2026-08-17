@@ -2,14 +2,13 @@
 import { UserCircle2, } from "lucide-react";
 import SettingsCard from "./FormFild/SettingsCard";
 import InputField from "./FormFild/InputField";
-// import SelectField from "./SelectField";
 import UploadField from "./FormFild/UploadField";
 
-import { useGetProfileQuery } from "../../../api/adminAuthApi"
+
 
 const inputClassName =
     `
-         cursor-not-allow
+        cursor-not-allowed
           w-full
           rounded-lg
           border
@@ -25,17 +24,10 @@ const inputClassName =
           duration-200
          hover:border-indigo-300 
         `
-
-export default function StoreInformation() {
-
-
-    const { data, isLoading } = useGetProfileQuery();
-
-    if (isLoading) return <p>Loading...</p>;
-
-    const user = data?.data;
-
-
+type Props = {
+    user: any;
+};
+export default function StoreInformation({ user }: Props) {
     return (
         <SettingsCard
             rightIcon={<UserCircle2 className="text-indigo-600" />}
@@ -103,7 +95,16 @@ export default function StoreInformation() {
             </div>
 
             <div className="mt-0">
-                <UploadField />
+                <UploadField
+                    disabled={true}
+                    label="Store Logo"
+                    value={""}
+                    onChange={() => {
+                        
+                       ;
+                    }}
+
+                />
             </div>
 
         </SettingsCard>

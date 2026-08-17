@@ -13,10 +13,6 @@ import { useGetSuperAdminProfileQuery, } from "../../../api/adminAuthApi"
 export default function RoleAndPermession() {
     const navigate = useNavigate()
 
-
-
-
-
     const { data, isLoading } = useGetSuperAdminProfileQuery();
 
     const users = data?.data ?? [];
@@ -103,7 +99,9 @@ export default function RoleAndPermession() {
                     </p>
                 </div>
 
-                <button className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
+                <button 
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-lg transition-colors"
+
                     onClick={handleAddUser}
                 >
                     <Plus size={16} />

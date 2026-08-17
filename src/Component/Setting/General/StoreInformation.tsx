@@ -2,10 +2,6 @@
 import { Store } from "lucide-react";
 import SettingsCard from "./FormFild/SettingsCard";
 import InputField from "./FormFild/InputField";
-// import SelectField from "./SelectField";
-// import UploadField from "./FormFild/UploadField";
-
-import { useGetProfileQuery } from "../../../api/adminAuthApi"
 const inputClassName =
   `
      cursor-not-allowed
@@ -24,27 +20,20 @@ const inputClassName =
           duration-200
          hover:border-indigo-300 
         `
-export default function StoreInformation() {
+
+type Props = {
+  user: any;
+};
 
 
-  const { data, isLoading } = useGetProfileQuery();
-
-  if (isLoading) return <p>Loading...</p>;
-
-  const user = data?.data;
-
-
+export default function StoreInformation({user}:Props) {
   return (
     <SettingsCard
       rightIcon={<Store className="text-indigo-600" />}
       leftIcon={""}
       title="Store Information"
       description="Update your store details."
-
     >
-
-
-
       <div className="grid md:grid-cols-2 gap-2">
 
         <InputField
@@ -162,17 +151,9 @@ export default function StoreInformation() {
           value={user?.panNumber}
           readOnly
         />
-        <InputField
-          className={`${inputClassName} ${user?.KYCVerified
-            ? "bg-green-100 text-green-700"
-            : "bg-gray-100 text-gray-700"
-            }`}
 
-          label=" KYC Details"
-          value={user?.KYCVerified ? "Verified" : "Not Verified"}
-          readOnly
-        />
-        <InputField
+
+          <InputField
            className={`${inputClassName} ${user?.accountMode
             ? "bg-green-100 text-green-700"
             : "bg-gray-100 text-red-700"
@@ -183,6 +164,17 @@ export default function StoreInformation() {
           readOnly
 
         />
+        <InputField
+          className={`${inputClassName} ${user?.KYCVerified
+            ? "bg-green-100 text-green-700"
+            : "bg-gray-100 text-gray-700"
+            }`}
+
+          label=" KYC Details"
+          value={user?.KYCVerified ? "Verified" : "Not Verified"}
+          readOnly
+        />
+      
 
       </div>
 

@@ -2,7 +2,7 @@
 import { Store } from "lucide-react";
 import SettingsCard from "../Form/SettingsCard";
 import InputField from "../Form/InputField";
-import { Hooks } from "./Hooks";
+import type { ProfileProps } from "./ProfileProps";
 const inputClassName =
   `
    cursor-not-allowed
@@ -22,19 +22,13 @@ const inputClassName =
          hover:border-indigo-300 
         `
 
-export default function StoreInformation() {
-
-  const { formData, user, isLoading } = Hooks();
-
-
-
-  if (isLoading) return <p>Loading...</p>;
+export default function StoreInformation({user}:ProfileProps) {
   return (
     <SettingsCard
       rightIcon={<Store className="text-indigo-600" />}
       leftIcon={""}
       title="Store Information"
-      description="Update your store details."
+      description="Review  your store details."
 
     >
       <div className="grid md:grid-cols-2 gap-2">
@@ -43,7 +37,7 @@ export default function StoreInformation() {
           className={inputClassName}
           label="Store  Name"
           type="businessName"
-          value={formData.businessName}
+          value={user.businessName}
           readOnly
 
         />
@@ -52,44 +46,44 @@ export default function StoreInformation() {
           className={inputClassName}
           label="Store  Type"
           type="businessType"
-          value={formData.businessType}
+          value={user.businessType}
           readOnly
         />
         <InputField
           className={inputClassName}
           label="Store Email"
           type="email"
-          value={formData.email}
+          value={user.email}
           readOnly
         />
         <InputField
           className={inputClassName}
           label="Store  Phone"
-          value={formData.phone}
+          value={user.phone}
           readOnly
         />
         <InputField
           className={inputClassName}
           label="Store Address"
-          value={formData.businessAddress}
+          value={user.businessAddress}
           readOnly
         />
         <InputField
           className={inputClassName}
           label=" city"
-          value={formData.city}
+          value={user.city}
           readOnly
         />
         <InputField
           className={inputClassName}
           label=" state"
-          value={formData.state}
+          value={user.state}
           readOnly
         />
         <InputField
           className={inputClassName}
           label=" pincode"
-          value={formData?.pincode}
+          value={user?.pincode}
           readOnly
         />
       </div>
@@ -101,14 +95,14 @@ export default function StoreInformation() {
           className={inputClassName}
           label="Account Holder Name"
           type="accountHolderName"
-          value={formData.accountHolderName}
+          value={user.accountHolderName}
           readOnly
         />
         <InputField
           className={inputClassName}
           label="Bank Name"
           type="bankName"
-          value={formData.bankName}
+          value={user.bankName}
           readOnly
         />
 
@@ -116,28 +110,38 @@ export default function StoreInformation() {
           className={inputClassName}
           label="Account Number"
           type="accountNumber"
-          value={formData.accountNumber}
+          value={user.accountNumber}
           readOnly
         />
 
         <InputField
           className={inputClassName}
           label="IFSC Code"
-          value={formData.ifscCode}
+          value={user.ifscCode}
           readOnly
         />
 
         <InputField
           className={inputClassName}
           label="GST Number"
-          value={formData.gstNumber}
+          value={user.gstNumber}
           readOnly
         />
 
         <InputField
           className={inputClassName}
           label=" Pan Number"
-          value={formData.panNumber}
+          value={user.panNumber}
+          readOnly
+        />
+
+           <InputField
+          className={`${inputClassName} ${user.accountMode
+            ? "bg-green-100 text-green-700"
+            : "bg-gray-100 text-red-700"
+            }`}
+          label="Account Mode"
+          value={user.accountMode ? "Active" : "Suspended"}
           readOnly
         />
         <InputField
@@ -147,18 +151,10 @@ export default function StoreInformation() {
             }`}
 
           label=" KYC Details"
-          value={formData.KYCVerified ? "Verified" : "Not Verified"}
+          value={user.KYCVerified ? "Verified" : "Not Verified"}
           readOnly
         />
-        <InputField
-          className={`${inputClassName} ${user.accountMode
-            ? "bg-green-100 text-green-700"
-            : "bg-gray-100 text-red-700"
-            }`}
-          label="Account Mode"
-          value={formData.accountMode ? "Active" : "Inactive"}
-          readOnly
-        />
+     
       </div>
     </SettingsCard>
   );

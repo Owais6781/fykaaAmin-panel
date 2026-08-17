@@ -11,13 +11,10 @@ import {
 
 import type { Payload } from "./Payload";
 
-
-
-
 export default function EditSeller() {
   const { id } = useParams();
   const { data } = useGetUserByIdQuery(id);
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const location = useLocation()
   const from = location.state?.from || "/dashboard/Role-And-Permission";
 
@@ -43,8 +40,9 @@ export default function EditSeller() {
     role: "Admin",
     rejectionReason: "",
     KYCVerified: false,
-    accountMode: false,
+    accountMode: true,
     vacationMode:false,
+    hideOutOfStock: false,
     createdAt: "",
     updatedAt: ""
 
@@ -74,8 +72,9 @@ export default function EditSeller() {
         role:(data.data.role as "Admin" | "SuperAdmin") ?? "Admin",
         rejectionReason: data.data.rejectionReason ?? "",
         KYCVerified: data.data.KYCVerified ??  false,
-        accountMode: data.data.accountMode ??  false,
+        accountMode: data.data.accountMode ??  true,
         vacationMode: data.data.vacationMode ?? false,
+        hideOutOfStock: data.data.hideOutOfStock ?? false,
         createdAt: data.data.createdAt ?? "",
         updatedAt: data.data.updatedAt ?? "",
       });

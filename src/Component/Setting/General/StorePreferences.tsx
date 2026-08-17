@@ -1,85 +1,94 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings } from "lucide-react";
 import ToggleSwitch from "./FormFild/ToggleSwitch";
 import SettingsCard from "./FormFild/SettingsCard";
+import { useUpdateAdminMutation } from "../../../api/adminAuthApi";
 
 
-export default function StorePreferences() {
+type Props = {
+  user: any;
+};
+export default function StorePreferences({ user }: Props) {
 
+  const [updateAdmin] = useUpdateAdminMutation();
 
+ 
 
   const [settings, setSettings] = useState({
-
-    maintenanceMode: false,
-    guestCheckout: true,
-    enableReviews: true,
-    enableWishlist: true,
-    newsletter: false,
-    productCompare: true,
-    productRating: true,
-    showOutOfStock: false,
+    vacationMode: false,
+    hideOutOfStock: false,
   });
 
-  const toggle = (key: keyof typeof settings) => {
+
+  useEffect(() => {
+    if (user) {
+      setSettings({
+        vacationMode: user.vacationMode,
+        hideOutOfStock: user.hideOutOfStock,
+      });
+    }
+  }, [user]);
+
+
+
+
+
+
+
+
+
+  const toggle = async (key: keyof typeof settings) => {
+    const value = !settings[key];
+
     setSettings((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      [key]: value,
     }));
+
+    try {
+      await updateAdmin({
+        id: user._id,
+        body: {
+              [key]: value,
+        },
+      }).unwrap();
+    } catch (err) {
+      console.error(err);
+
+      // API fail ho to UI rollback
+      setSettings((prev) => ({
+        ...prev,
+        [key]: !value,
+      }));
+    }
   };
+
+
+
+
 
   return (
     <SettingsCard
       title="Store Preferences"
       description="Configure general preferences for your store."
       rightIcon={<Settings className="text-indigo-600" size={22} />}
-       leftIcon={""}
+      leftIcon={""}
     >
-      <ToggleSwitch
-        label="Maintenance Mode"
-        description="Enable maintenance mode for your store."
-        checked={settings.maintenanceMode}
-        onChange={() => toggle("maintenanceMode")}
-      />
-{/* 
 
-<ToggleSwitch
+      <ToggleSwitch
         label="Vacation Mode"
         description="Hide your products from customers until you turn off Vacation Mode."
-        checked={formData.vacationMode}
+        checked={settings.vacationMode}
         onChange={() => toggle("vacationMode")}
       />
 
- */}
-
-
-
-   <ToggleSwitch
-        label="Show Out of Stock Products"
-        description="Display unavailable products in the store."
-        checked={settings.showOutOfStock}
-        onChange={() => toggle("showOutOfStock")}
-      />
-    
-
       <ToggleSwitch
-        label="Enable Reviews"
-        description="Customers can write reviews."
-        checked={settings.enableReviews}
-        onChange={() => toggle("enableReviews")}
+        label="Hide Out of Stock Products"
+        description="Hide out-of-stock products from customers on the website."
+        checked={settings.hideOutOfStock}
+        onChange={() => toggle("hideOutOfStock")}
       />
 
-    
-
-    
-
-      <ToggleSwitch
-        label="Product Rating"
-        description="Display product ratings."
-        checked={settings.productRating}
-        onChange={() => toggle("productRating")}
-      />
-
-   
     </SettingsCard>
   );
 }

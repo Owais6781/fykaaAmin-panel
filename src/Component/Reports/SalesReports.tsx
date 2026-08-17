@@ -7,7 +7,8 @@ import {
     ShoppingBag,
     Users,
     Wallet,
-    MoreHorizontal
+    MoreHorizontal,
+    Package,
 } from "lucide-react";
 
 import {
@@ -24,7 +25,7 @@ import {
 } from "recharts";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import ExportExcel from "../ExcelDownload/ExportExcel";
+import ExportExcel from "../ExcelDownload/ExcelDownload";
 import { useGetMyOrdersQuery } from "../../api/orderApi";
 
 import OrderModal from "../../Component/CustomerInfo/OrderModal";
@@ -82,7 +83,7 @@ export default function SalesReport() {
 
     const [chartType, setChartType] = useState<"orders" | "sales" | "revenue" | "customers">("orders");
 
-    const { data, } = useGetMyOrdersQuery();
+    const { data, isLoading,isError} = useGetMyOrdersQuery();
 
     const orders: Order[] = Array.isArray(data) ? data : [];
 
@@ -437,6 +438,51 @@ const deliveredOrders = filteredOrders.filter(
         Cancelled: "bg-red-50 text-red-700",
     };
 
+
+  if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="relative">
+                        <div className="w-20 h-20 border-4 border-purple-200 rounded-full animate-spin border-t-purple-600 mx-auto"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <Package size={28} className="text-purple-600" />
+                        </div>
+                    </div>
+                    <p className="mt-6 text-gray-600 font-medium">Loading Sales Reports...</p>
+                    <p className="text-sm text-gray-400 mt-1">Please wait while we fetch your data</p>
+                </div>
+            </div>
+        );
+    }
+
+
+
+        if (isError)
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center px-4">
+                <div className="text-center">
+                    <div className="text-6xl mb-4">📡</div>
+
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                        No Internet Connection
+                    </h2>
+
+                    <p className="text-slate-500 mb-6">
+                        Please check your network and try again.
+                    </p>
+
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+
+
     return (
         <div className="min-h-screen bg-gray-100 p-6">
 
@@ -774,10 +820,10 @@ const deliveredOrders = filteredOrders.filter(
                                     <div className="absolute right-0  w-34 rounded-xl   bg-white shadow-lg p-2 z-50">
                                         <div className="mb-2  text-[12px] text-indigo-500 font-medium  cursor-pointer">
                                             <ExportExcel
-                                                data={excelData}
+                                                data={excelData ||[]}
                                                 fileName="Sales_Report"
                                                 sheetName="Orders"
-                                                buttonText="Export Excel"
+                                                buttonText="Export to Excel"
                                             />
                                         </div>
 

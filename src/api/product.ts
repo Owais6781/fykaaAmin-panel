@@ -10,11 +10,11 @@ export const ProductApi = createApi({
         baseUrl: `${Api}/api`,
         prepareHeaders: (headers) => {
             const token = localStorage.getItem("token");
+            //   console.log("Token:", token);
 
             if (token) {
                 headers.set("Authorization", `Bearer ${token}`);
             }
-
             return headers;
         },
 
@@ -88,7 +88,8 @@ export const {
     useAddProductMutation,
     useGetProductsQuery,
     useDeleteProductMutation,
-    useGetViewQuery, useGetProductImagesQuery,
+    useGetViewQuery, 
+    useGetProductImagesQuery,
     useGetActivityLogQuery,
     useUpdateProductMutation } = ProductApi;
 

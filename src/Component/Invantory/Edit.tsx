@@ -1,11 +1,10 @@
-
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   useGetViewQuery,
   useUpdateProductMutation,
   useDeleteProductMutation,
-} from "../../api/product"
+} from "../../api/product";
 import {
   Package,
   FileText,
@@ -18,22 +17,24 @@ import {
   X,
   Trash2,
   RefreshCw,
-  Edit3,
-  Layers,
   Sparkles,
   Upload,
-  Eye,
   Copy,
-  Zap,
-  Shield,
-  TrendingUp,
   ClipboardList,
-  RotateCcw,
+  Layers,
 } from "lucide-react";
+
+
+import { useGetCategoriesQuery } from "../../api/category";
 
 type ProductFromApi = {
   _id: string;
-  category?: string;
+  category: {
+    _id: string;
+    name: string;
+    slug: string;
+    isActive: boolean;
+  };
   title?: string;
   description?: string;
   stock?: number;
@@ -75,7 +76,7 @@ const Edit: React.FC = () => {
   const { data, isLoading, isError, error, refetch } = useGetViewQuery(id!, {
     skip: !id,
   });
-
+const { data: categoriesData,} = useGetCategoriesQuery();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
   const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
 
@@ -107,36 +108,34 @@ const Edit: React.FC = () => {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<"basic" | "media" | "pricing">("basic");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const Api = import.meta.env.VITE_API_URL;
 
-  const categories = useMemo(
-    () => [
-      { value: "Decorative-Lights", label: "Decorative Lights", icon: "💡", color: "from-amber-400 to-orange-500" },
-      { value: "Indoor-Plants", label: "Indoor Plants", icon: "🌿", color: "from-green-400 to-emerald-500" },
-      { value: "Curtains", label: "Curtains", icon: "🪟", color: "from-purple-400 to-indigo-500" },
-      { value: "Cushions", label: "Cushions", icon: "🛋️", color: "from-pink-400 to-rose-500" },
-      { value: "Lighting", label: "Lighting", icon: "✨", color: "from-yellow-400 to-amber-500" },
-      { value: "Wall-Art", label: "Wall Art", icon: "🎨", color: "from-cyan-400 to-blue-500" },
-      { value: "Carpets-Rugs", label: "Carpets & Rugs", icon: "🧶", color: "from-yellow-400 to-orange-500" },
-      { value: "Bedsheets", label: "Bedsheets", icon: "🛏️", color: "from-purple-400 to-indigo-500" },
-      { value: "Decorative-Vases", label: "Decorative Vases", icon: "🏺", color: "from-teal-400 to-emerald-500" },
-      { value: "Photo-Frames", label: "Photo Frames", icon: "🖼️", color: "from-rose-400 to-pink-500" },
-      { value: "Wall-Clocks", label: "Wall Clocks", icon: "🕰️", color: "from-indigo-400 to-blue-500" },
-      { value: "Decorative-Mirrors", label: "Decorative Mirrors", icon: "🪞", color: "from-cyan-400 to-sky-500" },
-    ],
-    []
-  );
+
+ const categories =
+    categoriesData?.data
+      ?.filter((item: any) => item.isActive)
+      .map((item: any) => ({
+        value: item._id,
+        label: item.name,
+        slug: item.slug,
+      })) || [];
+
+
+
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   useEffect(() => {
     if (!product) return;
 
     setFormData({
-      category: product.category || "",
+      category: product.category?._id|| "",
       title: product.title || "",
       description: product.description || "",
       stock: product.stock != null ? String(product.stock) : "",
@@ -166,9 +165,11 @@ const Edit: React.FC = () => {
     setIsDataLoaded(true);
   }, [product]);
 
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type, checked } = e.target as HTMLInputElement;
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
 
     setFormData((prev) => ({
       ...prev,
@@ -257,10 +258,6 @@ const Edit: React.FC = () => {
   const imageUrl = (productId: string, index: number) =>
     `${Api}/api/${productId}/img/${index}`;
 
-  const getCategoryInfo = (value: string) => {
-    return categories.find((c) => c.value === value);
-  };
-
   const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
     e?.preventDefault();
 
@@ -300,7 +297,7 @@ const Edit: React.FC = () => {
       setSubmitStatus("success");
 
       setTimeout(() => {
-        navigate("/inventory");
+        navigate("/dashboard/inventory");
       }, 1500);
     } catch (err) {
       console.error("Update failed:", err);
@@ -312,7 +309,7 @@ const Edit: React.FC = () => {
     if (!product) return;
 
     setFormData({
-      category: product.category || "",
+      category: product.category?._id || "",
       title: product.title || "",
       description: product.description || "",
       stock: product.stock != null ? String(product.stock) : "",
@@ -347,7 +344,7 @@ const Edit: React.FC = () => {
     try {
       if (!id) return;
       await deleteProduct(id).unwrap();
-      navigate("/inventory");
+      navigate("/dashboard/inventory");
     } catch (error: any) {
       console.log("Delete error:", error);
       alert(error?.data?.message || "Delete failed");
@@ -356,16 +353,16 @@ const Edit: React.FC = () => {
 
   if (!id) {
     return (
-      <div className="min-h-screen ml-64 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100">
-        <div className="text-center">
-          <div className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-2xl shadow-red-500/30">
-            <AlertCircle size={40} className="text-white" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md w-full text-center bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+            <AlertCircle size={24} />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Invalid Route</h2>
-          <p className="text-slate-500 mb-8">Product ID is missing from the URL</p>
+          <h2 className="text-xl font-bold text-slate-900 mb-1">Invalid Route</h2>
+          <p className="text-slate-500 text-sm mb-6">Product ID is missing from the URL</p>
           <button
             onClick={() => navigate(-1)}
-            className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-semibold hover:bg-slate-800 transition-all duration-300 shadow-xl hover:shadow-2xl"
+            className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition"
           >
             Go Back
           </button>
@@ -376,90 +373,42 @@ const Edit: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen ml-64 flex items-center justify-center bg-gradient-to-br from-slate-900 via-violet-900 to-slate-900 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-0 -left-40 w-80 h-80 bg-violet-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-          <div className="absolute top-0 -right-40 w-80 h-80 bg-fuchsia-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-40 left-20 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin"></div>
+          <Package size={24} className="text-indigo-600" />
         </div>
-
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
-
-        <div className="relative z-10 text-center">
-          <div className="relative w-40 h-40 mx-auto mb-10">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 animate-spin-slow blur-md opacity-50"></div>
-            <div className="absolute inset-2 rounded-full bg-slate-900"></div>
-            <div className="absolute inset-4 rounded-full border-4 border-transparent border-t-violet-500 border-r-fuchsia-500 animate-spin"></div>
-            <div
-              className="absolute inset-8 rounded-full border-4 border-transparent border-b-pink-500 border-l-purple-500 animate-spin"
-              style={{ animationDirection: "reverse", animationDuration: "1.5s" }}
-            ></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Package size={32} className="text-white/80" />
-            </div>
-          </div>
-
-          <h2 className="text-3xl font-bold text-white mb-3">Loading Product</h2>
-          <p className="text-white/50 text-lg">Fetching product details...</p>
-
-          <div className="flex justify-center gap-3 mt-8">
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="w-3 h-3 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 animate-bounce"
-                style={{ animationDelay: `${i * 100}ms` }}
-              ></div>
-            ))}
-          </div>
-        </div>
-
-        <style>{`
-          @keyframes blob {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(20px, -30px) scale(1.1); }
-            50% { transform: translate(-20px, 20px) scale(0.9); }
-            75% { transform: translate(30px, 10px) scale(1.05); }
-          }
-          .animate-blob { animation: blob 10s infinite; }
-          .animation-delay-2000 { animation-delay: 2s; }
-          .animation-delay-4000 { animation-delay: 4s; }
-          .animate-spin-slow { animation: spin 3s linear infinite; }
-        `}</style>
+        <h2 className="text-lg font-semibold text-slate-800">Loading Product</h2>
+        <p className="text-sm text-slate-500 mt-1">Retrieving details...</p>
       </div>
     );
   }
 
   if (isError || !product) {
     return (
-      <div className="min-h-screen ml-64 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 p-6">
-        <div className="max-w-lg w-full">
-          <div className="bg-white rounded-3xl p-10 shadow-2xl shadow-slate-200/50 border border-slate-100">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-xl shadow-red-500/30">
-              <AlertCircle size={36} className="text-white" />
-            </div>
-
-            <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">
-              Failed to Load Product
-            </h2>
-            <p className="text-center text-slate-500 mb-8">
-              {(error as any)?.data?.message || "Something went wrong"}
-            </p>
-
-            <div className="flex gap-4">
-              <button
-                onClick={() => refetch()}
-                className="flex-1 px-6 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/30"
-              >
-                <RefreshCw size={20} />
-                Retry
-              </button>
-              <button
-                onClick={() => navigate(-1)}
-                className="flex-1 px-6 py-4 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition-all duration-300"
-              >
-                Go Back
-              </button>
-            </div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 border border-slate-200 shadow-sm text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+            <AlertCircle size={24} />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-1">Failed to Load Product</h2>
+          <p className="text-sm text-slate-500 mb-6">
+            {(error as any)?.data?.message || "Something went wrong while fetching details"}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => refetch()}
+              className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+            >
+              <RefreshCw size={18} />
+              Retry
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 transition"
+            >
+              Go Back
+            </button>
           </div>
         </div>
       </div>
@@ -473,33 +422,38 @@ const Edit: React.FC = () => {
         ? imageUrl(product._id, 0)
         : "";
 
+
+  const selectedCategory = categories.find(
+    (cat) => cat.value === formData.category
+  );
   return (
-    <div className="min-h-screen  bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-12">
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
-              <Trash2 size={28} className="text-white" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full border border-slate-200 shadow-xl">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <Trash2 size={24} />
             </div>
 
-            <h3 className="text-2xl font-bold text-center text-slate-800 mb-2">Delete Product?</h3>
-            <p className="text-center text-slate-500 mb-8">
-              This action cannot be undone. The product "{formData.title}" will be permanently removed.
+            <h3 className="text-lg font-bold text-center text-slate-900 mb-1">Delete Product?</h3>
+            <p className="text-sm text-center text-slate-500 mb-6">
+              This action cannot be undone. <span className="font-semibold text-slate-700">"{formData.title}"</span> will be permanently removed.
             </p>
 
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-6 py-4 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition"
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="flex-1 px-6 py-4 rounded-2xl bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white font-medium hover:bg-rose-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isDeleting ? <Loader2 size={20} className="animate-spin" /> : <Trash2 size={20} />}
+                {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
                 {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
@@ -507,46 +461,63 @@ const Edit: React.FC = () => {
         </div>
       )}
 
-      <header className=" bg-white/80 backdrop-blur-xl border-b border-slate-200/50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
+      {/* Top Sticky Header */}
+      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
+        {/* Top Row: Title, Actions & Back Button */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4  pb-3">
+          <div className="flex items-center justify-between py-4">
+            {/* Left side: Back button & Title/Subtext */}
+            <div className="flex items-center gap-3.5">
               <button
+                type="button"
                 onClick={() => navigate(-1)}
-                className="p-2.5 rounded-xl hover:bg-slate-100 transition-colors"
+                className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition border border-slate-200/80"
               >
-                <ArrowLeft size={22} className="text-slate-600" />
+                <ArrowLeft size={18} />
               </button>
 
               <div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-500/30">
-                    <Edit3 size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-slate-800">Edit Product</h1>
-                    <p className="text-sm text-slate-500">
-                      ID: {product._id}
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(product._id)}
-                        className="ml-2 text-slate-400 hover:text-slate-600"
-                      >
-                        <Copy size={12} />
-                      </button>
-                    </p>
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-lg font-bold text-slate-900">Edit Product</h1>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${formData.isActive
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-slate-100 text-slate-600 border-slate-200"
+                      }`}
+                  >
+                    {formData.isActive ? "Active" : "Draft"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                  <span>ID: {product._id}</span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(product._id)}
+                    className="text-slate-400 hover:text-indigo-600 transition"
+                  >
+                    {copied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                  </button>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* Right side: Action Buttons */}
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition"
+                title="Delete Product"
+              >
+                <Trash2 size={18} />
+              </button>
+
               <button
                 type="button"
                 onClick={handleReset}
-                className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition flex items-center gap-2"
+                className="px-3.5 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition flex items-center gap-2"
               >
-                <RefreshCw size={18} />
+                <RefreshCw size={16} />
                 Reset
               </button>
 
@@ -554,175 +525,155 @@ const Edit: React.FC = () => {
                 type="button"
                 onClick={handleSubmit}
                 disabled={isUpdating}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold hover:opacity-90 transition flex items-center gap-2 shadow-lg shadow-violet-500/30 disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-xl transition-colors shadow-sm disabled:opacity-50"
               >
-                {isUpdating ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                 {isUpdating ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
         </div>
+
+        {/* Bottom Row: Navigation Tabs (Image jaisa clean look) */}
+        <div className="border-t border-slate-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-8">
+            {[
+              { id: "basic", label: "Basic Info", icon: FileText },
+              { id: "media", label: "Media & Images", icon: ImageIcon },
+              { id: "pricing", label: "Pricing & Options", icon: ClipboardList },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as "basic" | "media" | "pricing")}
+                className={`py-3 flex items-center gap-2 text-sm font-medium border-b-2 transition-colors -mb-[1px] ${activeTab === tab.id
+                  ? "border-slate-900 text-slate-900 font-semibold"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  }`}
+              >
+                <tab.icon size={16} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
 
+      {/* Notifications */}
       {submitStatus === "success" && (
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-4">
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-3">
-            <div className="p-1 bg-white/20 rounded-full">
-              <Check size={18} />
-            </div>
-            <span className="font-semibold">Product updated successfully! Redirecting...</span>
+        <div className="bg-emerald-600 text-white text-sm py-2.5 px-4 shadow-inner">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
+            <Check size={16} />
+            <span className="font-medium">Product updated successfully! Redirecting...</span>
           </div>
         </div>
       )}
 
       {isDataLoaded && submitStatus === "idle" && (
-        <div className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white px-6 py-3">
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
-            <Sparkles size={18} />
-            <span className="font-medium">Product data loaded successfully</span>
+        <div className="bg-indigo-50 border-b border-indigo-100 text-indigo-900 text-xs py-2 px-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-1.5">
+            <Sparkles size={14} className="text-indigo-600" />
+            <span>Product data synchronized with inventory</span>
           </div>
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-8">
-            <div className="bg-white rounded-2xl p-2 mb-6 shadow-sm border border-slate-100 inline-flex">
-              {[
-                { id: "basic", label: "Basic Info", icon: FileText },
-                { id: "media", label: "Media", icon: ImageIcon },
-                { id: "pricing", label: "Pricing", icon: ClipboardList },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id as "basic" | "media" | "pricing")}
-                  className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${activeTab === tab.id
-                      ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30"
-                      : "text-slate-600 hover:bg-slate-50"
-                    }`}
-                >
-                  <tab.icon size={18} />
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Main Form Tabs */}
+          <div className="lg:col-span-8 space-y-6">
             <form onSubmit={handleSubmit}>
+              {/* TAB 1: BASIC INFO */}
               {activeTab === "basic" && (
-                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-                  <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 px-8 py-6">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                      <FileText size={24} />
-                      Basic Information
-                    </h2>
-                    <p className="text-violet-200 text-sm mt-1">
-                      Enter the core details of your product
-                    </p>
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">Basic Information</h2>
+                    <p className="text-xs text-slate-500">Update title, category, and core product properties</p>
                   </div>
 
-                  <div className="p-8 space-y-8">
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        Category
-                      </label>
-                      <div className="grid grid-cols-3 gap-3">
-                        {categories.map((cat) => (
-                          <button
-                            key={cat.value}
-                            type="button"
-                            onClick={() => {
-                              setFormData((prev) => ({ ...prev, category: cat.value }));
-                              if (errors.category) {
-                                setErrors((prev) => ({ ...prev, category: "" }));
-                              }
-                            }}
-                            className={`p-4 rounded-2xl border-2 transition-all duration-200 text-left ${formData.category === cat.value
-                                ? "border-violet-500 bg-violet-50 shadow-lg shadow-violet-500/20"
-                                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                              }`}
+                  <div className="space-y-5">
+                    {/* Title */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Category */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          Category <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <select
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            className={`w-full px-3.5 py-2.5 rounded-xl border ${errors.category ? "border-red-400 bg-red-50/20" : "border-slate-200 focus:border-purple-500"
+                              } text-slate-800 focus:ring-2 focus:ring-purple-100 transition-all outline-none text-sm appearance-none`}
                           >
-                            <span className="text-2xl mb-2 block">{cat.icon}</span>
-                            <span
-                              className={`font-semibold ${formData.category === cat.value ? "text-violet-700" : "text-slate-700"
-                                }`}
-                            >
-                              {cat.label}
-                            </span>
-                          </button>
-                        ))}
+                            <option value="">Select Category</option>
+                            {categories.map((cat: any) => (
+                              <option key={cat.value} value={cat.value}>
+                                {cat.label}
+                              </option>
+                            ))}
+                          </select>
+                          <Layers size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
+                        {errors.category && <p className="text-xs text-red-500 mt-1">{errors.category}</p>}
                       </div>
-                      {errors.category && (
-                        <p className="mt-3 text-sm text-red-500 flex items-center gap-1">
-                          <AlertCircle size={14} />
-                          {errors.category}
-                        </p>
-                      )}
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        Product Title
-                      </label>
-                      <input
-                        type="text"
-                        name="title"
-                        value={formData.title}
-                        onChange={handleChange}
-                        placeholder="Enter product title..."
-                        className={`w-full px-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-lg ${errors.title
-                            ? "border-red-300 focus:border-red-500 bg-red-50"
-                            : "border-slate-200 focus:border-violet-500 focus:bg-violet-50/30"
-                          }`}
-                      />
-                      <div className="flex justify-between mt-2">
-                        {errors.title ? (
-                          <p className="text-sm text-red-500 flex items-center gap-1">
-                            <AlertCircle size={14} />
-                            {errors.title}
-                          </p>
-                        ) : (
-                          <span></span>
-                        )}
-                        <span className="text-sm text-slate-400">{formData.title.length}/100</span>
+                      {/* Title */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          Product Title <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="title"
+                          placeholder="e.g. Wireless Noise-Canceling Headphones"
+                          value={formData.title}
+                          onChange={handleChange}
+                          className={`w-full px-3.5 py-2.5 rounded-xl border ${errors.title ? "border-red-400 bg-red-50/20" : "border-slate-200 focus:border-purple-500"
+                            } text-slate-800 focus:ring-2 focus:ring-purple-100 transition-all outline-none text-sm`}
+                        />
+                        {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
                       </div>
                     </div>
 
+
+
+
+                    {/* Description */}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        Description
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
+                        Description <span className="text-rose-500">*</span>
                       </label>
                       <textarea
                         name="description"
                         value={formData.description}
                         onChange={handleChange}
                         rows={5}
-                        placeholder="Describe your product..."
-                        className={`w-full px-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 resize-none ${errors.description
-                            ? "border-red-300 focus:border-red-500 bg-red-50"
-                            : "border-slate-200 focus:border-violet-500 focus:bg-violet-50/30"
+                        placeholder="Detailed description of the product..."
+                        className={`w-full p-4 rounded-xl border text-sm outline-none transition resize-none ${errors.description
+                          ? "border-rose-300 bg-rose-50/50 focus:border-rose-500"
+                          : "border-slate-200 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
                           }`}
                       />
-                      <div className="flex justify-between mt-2">
+                      <div className="flex justify-between items-center mt-1.5 text-xs">
                         {errors.description ? (
-                          <p className="text-sm text-red-500 flex items-center gap-1">
-                            <AlertCircle size={14} />
-                            {errors.description}
-                          </p>
+                          <span className="text-rose-500 flex items-center gap-1">
+                            <AlertCircle size={12} /> {errors.description}
+                          </span>
                         ) : (
                           <span></span>
                         )}
-                        <span className="text-sm text-slate-400">
-                          {formData.description.length}/500
-                        </span>
+                        <span className="text-slate-400">{formData.description.length}/500</span>
                       </div>
                     </div>
 
+                    {/* Stock */}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        Stock Quantity
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
+                        Stock Quantity <span className="text-rose-500">*</span>
                       </label>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
                         <input
                           type="number"
                           name="stock"
@@ -730,19 +681,19 @@ const Edit: React.FC = () => {
                           onChange={handleChange}
                           placeholder="0"
                           min="0"
-                          className={`w-48 px-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-lg font-semibold ${errors.stock
-                              ? "border-red-300 focus:border-red-500 bg-red-50"
-                              : "border-slate-200 focus:border-violet-500"
+                          className={`w-36 px-4 py-2.5 rounded-xl border text-sm font-semibold outline-none transition ${errors.stock
+                            ? "border-rose-300 bg-rose-50/50 focus:border-rose-500"
+                            : "border-slate-200 focus:border-indigo-600"
                             }`}
                         />
 
                         {formData.stock !== "" && (
-                          <div
-                            className={`px-4 py-2 rounded-full font-medium text-sm ${parseInt(formData.stock) === 0
-                                ? "bg-red-100 text-red-700"
-                                : parseInt(formData.stock) <= 5
-                                  ? "bg-amber-100 text-amber-700"
-                                  : "bg-emerald-100 text-emerald-700"
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium border ${parseInt(formData.stock) === 0
+                              ? "bg-rose-50 text-rose-700 border-rose-200"
+                              : parseInt(formData.stock) <= 5
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-emerald-50 text-emerald-700 border-emerald-200"
                               }`}
                           >
                             {parseInt(formData.stock) === 0
@@ -750,13 +701,12 @@ const Edit: React.FC = () => {
                               : parseInt(formData.stock) <= 5
                                 ? "Low Stock"
                                 : "In Stock"}
-                          </div>
+                          </span>
                         )}
                       </div>
                       {errors.stock && (
-                        <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                          <AlertCircle size={14} />
-                          {errors.stock}
+                        <p className="mt-1.5 text-xs text-rose-500 flex items-center gap-1">
+                          <AlertCircle size={12} /> {errors.stock}
                         </p>
                       )}
                     </div>
@@ -764,556 +714,334 @@ const Edit: React.FC = () => {
                 </div>
               )}
 
+              {/* TAB 2: MEDIA */}
               {activeTab === "media" && (
-                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-                  <div className="bg-gradient-to-r from-cyan-600 to-blue-600 px-8 py-6">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                      <ImageIcon size={24} />
-                      Product Images
-                    </h2>
-                    <p className="text-cyan-200 text-sm mt-1">
-                      Upload high-quality images of your product
-                    </p>
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">Product Images</h2>
+                    <p className="text-xs text-slate-500">Upload new images or remove existing ones</p>
                   </div>
 
-                  <div className="p-8 space-y-8">
-                    <label className="block cursor-pointer group">
-                      <div className="border-[3px] border-dashed border-slate-200 rounded-3xl p-12 text-center hover:border-violet-400 hover:bg-violet-50/30 transition-all duration-300">
-                        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-xl shadow-violet-500/30 group-hover:scale-110 transition-transform duration-300">
-                          <Upload size={32} className="text-white" />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">
-                          Drop images here or click to upload
-                        </h3>
-                        <p className="text-slate-500">
-                          Supports: PNG, JPG, JPEG
-                        </p>
+                  {/* Upload Box */}
+                  <label className="block cursor-pointer group">
+                    <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center hover:border-indigo-500 hover:bg-slate-50/80 transition group-hover:border-indigo-600">
+                      <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center transition group-hover:scale-105">
+                        <Upload size={22} />
                       </div>
+                      <p className="text-sm font-semibold text-slate-800">
+                        Click to upload or drag & drop
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">PNG, JPG, WEBP up to 5MB</p>
                       <input
                         type="file"
-                        accept="image/png, image/jpeg, image/jpg"
-                        onChange={handleImageChange}
                         multiple
+                        accept="image/*"
+                        onChange={handleImageChange}
                         className="hidden"
                       />
-                    </label>
+                    </div>
+                  </label>
 
-                    {existingImages.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                          <Layers size={18} className="text-slate-400" />
-                          Current Images ({existingImages.length})
-                        </h3>
-                        <div className="grid grid-cols-4 gap-4">
-                          {existingImages.map((imgId, index) => (
-                            <div key={imgId} className="relative group rounded-2xl overflow-hidden aspect-square">
-                              <img
-                                src={imageUrl(product._id, index)}
-                                className="w-full h-full object-cover"
-                                alt={`Product ${index + 1}`}
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).src =
-                                    "https://via.placeholder.com/200?text=Image";
-                                }}
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div className="absolute bottom-3 left-3 right-3 flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveExistingImage(imgId, index)}
-                                    className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition flex items-center justify-center gap-1"
-                                  >
-                                    <Trash2 size={14} />
-                                    Remove
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {formData.images.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                          <Sparkles size={18} className="text-violet-500" />
-                          New Images ({formData.images.length})
-                        </h3>
-                        <div className="grid grid-cols-4 gap-4">
-                          {formData.images.map((img, index) => (
-                            <div
-                              key={index}
-                              className="relative group rounded-2xl overflow-hidden aspect-square ring-2 ring-violet-500 ring-offset-2"
-                            >
-                              <img
-                                src={URL.createObjectURL(img)}
-                                className="w-full h-full object-cover"
-                                alt={`New ${index + 1}`}
-                              />
-                              <div className="absolute top-2 left-2 px-2 py-1 bg-violet-500 text-white text-xs font-bold rounded-lg">
-                                NEW
-                              </div>
+                  {/* Existing Images */}
+                  {existingImages.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+                        Existing Images ({existingImages.length})
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {existingImages.map((img, idx) => (
+                          <div
+                            key={img || idx}
+                            className="group relative aspect-square rounded-xl border border-slate-200 overflow-hidden bg-slate-100"
+                          >
+                            <img
+                              src={imageUrl(product._id, idx)}
+                              alt={`Product image ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                               <button
                                 type="button"
-                                onClick={() => handleRemoveNewImage(index)}
-                                className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition opacity-0 group-hover:opacity-100 shadow-lg"
+                                onClick={() => handleRemoveExistingImage(img, idx)}
+                                className="p-2 rounded-xl bg-white/90 text-rose-600 hover:bg-white transition"
+                                title="Delete image"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Newly Uploaded Images */}
+                  {formData.images.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+                        New Images to Upload ({formData.images.length})
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {formData.images.map((file, idx) => (
+                          <div
+                            key={idx}
+                            className="group relative aspect-square rounded-xl border border-slate-200 overflow-hidden bg-slate-100"
+                          >
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt="New upload"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveNewImage(idx)}
+                                className="p-2 rounded-xl bg-white/90 text-rose-600 hover:bg-white transition"
                               >
                                 <X size={16} />
                               </button>
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
                       </div>
-                    )}
-
-                    {existingImages.length === 0 && formData.images.length === 0 && (
-                      <div className="text-center py-12">
-                        <ImageIcon size={48} className="mx-auto text-slate-300 mb-4" />
-                        <p className="text-slate-500">No images uploaded yet</p>
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
+              {/* TAB 3: PRICING & OPTIONS */}
               {activeTab === "pricing" && (
-                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-                  <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-8 py-6">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                      Pricing Details
-                    </h2>
-                    <p className="text-emerald-200 text-sm mt-1">
-                      Set competitive prices for your product
-                    </p>
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">Pricing & Payment Policy</h2>
+                    <p className="text-xs text-slate-500">Configure prices, discounts, and terms</p>
                   </div>
 
-                  <div className="p-8 space-y-8">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
-                          Original Price
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 font-semibold text-lg">
-                            Rs
-                          </span>
-                          <input
-                            type="number"
-                            name="price"
-                            value={formData.price}
-                            onChange={handleChange}
-                            placeholder="0.00"
-                            step="0.01"
-                            min="0"
-                            className={`w-full pl-14 pr-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-2xl font-bold ${errors.price
-                                ? "border-red-300 focus:border-red-500 bg-red-50"
-                                : "border-slate-200 focus:border-emerald-500"
-                              }`}
-                          />
-                        </div>
-                        {errors.price && (
-                          <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                            <AlertCircle size={14} />
-                            {errors.price}
-                          </p>
-                        )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* Regular Price */}
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
+                        Regular Price ($) <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.01"
+                          name="price"
+                          value={formData.price}
+                          onChange={handleChange}
+                          placeholder="0.00"
+                          className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition ${errors.price
+                            ? "border-rose-300 bg-rose-50/50"
+                            : "border-slate-200 focus:border-indigo-600"
+                            }`}
+                        />
                       </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
-                          Sale Price <span className="text-slate-400 font-normal">(Optional)</span>
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 font-semibold text-lg">
-                            Rs
-                          </span>
-                          <input
-                            type="number"
-                            name="discountPrice"
-                            value={formData.discountPrice}
-                            onChange={handleChange}
-                            placeholder="0.00"
-                            step="0.01"
-                            min="0"
-                            className={`w-full pl-14 pr-5 py-4 rounded-2xl border-2 outline-none transition-all duration-200 text-2xl font-bold ${errors.discountPrice
-                                ? "border-red-300 focus:border-red-500 bg-red-50"
-                                : "border-slate-200 focus:border-emerald-500"
-                              }`}
-                          />
-                        </div>
-                        {errors.discountPrice && (
-                          <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                            <AlertCircle size={14} />
-                            {errors.discountPrice}
-                          </p>
-                        )}
-                      </div>
+                      {errors.price && (
+                        <p className="mt-1.5 text-xs text-rose-500 flex items-center gap-1">
+                          <AlertCircle size={12} /> {errors.price}
+                        </p>
+                      )}
                     </div>
 
-                    {formData.price &&
-                      formData.discountPrice &&
-                      parseFloat(formData.discountPrice) < parseFloat(formData.price) && (
-                        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-200">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <TrendingUp size={20} className="text-emerald-600" />
-                                <span className="font-semibold text-emerald-700">Discount Active</span>
-                              </div>
-                              <p className="text-emerald-600">
-                                Customers save Rs{" "}
-                                {(parseFloat(formData.price) - parseFloat(formData.discountPrice)).toFixed(2)}
-                              </p>
-                            </div>
-                            <div className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl font-bold text-2xl shadow-lg shadow-emerald-500/30">
-                              {calculateDiscount()}% OFF
-                            </div>
-                          </div>
-                        </div>
+                    {/* Discount Price */}
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
+                        Discount Price ($)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="discountPrice"
+                        value={formData.discountPrice}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition ${errors.discountPrice
+                          ? "border-rose-300 bg-rose-50/50"
+                          : "border-slate-200 focus:border-indigo-600"
+                          }`}
+                      />
+                      {calculateDiscount() !== "0" && (
+                        <p className="mt-1 text-xs text-emerald-600 font-medium">
+                          Save {calculateDiscount()}% off standard price
+                        </p>
                       )}
+                      {errors.discountPrice && (
+                        <p className="mt-1.5 text-xs text-rose-500 flex items-center gap-1">
+                          <AlertCircle size={12} /> {errors.discountPrice}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-                    {formData.price && (
-                      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-8 text-white">
-                        <p className="text-slate-400 text-sm font-medium mb-4">Customer sees:</p>
-                        <div className="flex items-baseline gap-4">
-                          {formData.discountPrice &&
-                            parseFloat(formData.discountPrice) < parseFloat(formData.price) ? (
-                            <>
-                              <span className="text-5xl font-bold">Rs {formData.discountPrice}</span>
-                              <span className="text-2xl text-slate-500 line-through">
-                                Rs {formData.price}
-                              </span>
-                              <span className="px-3 py-1.5 bg-emerald-500 text-white text-sm font-bold rounded-lg">
-                                SAVE {calculateDiscount()}%
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-5xl font-bold">Rs {formData.price}</span>
+                  <hr className="border-slate-100" />
+
+                  {/* Payment Options */}
+                  <div className="space-y-3">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                      Payment Methods
+                    </label>
+                    <div className="flex flex-wrap gap-4">
+                      <label className="flex items-center gap-2.5 cursor-pointer text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          name="cod"
+                          checked={formData.cod}
+                          onChange={handleChange}
+                          className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                        />
+                        Cash on Delivery (COD)
+                      </label>
+
+                      <label className="flex items-center gap-2.5 cursor-pointer text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          name="online"
+                          checked={formData.online}
+                          onChange={handleChange}
+                          className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                        />
+                        Online Payment
+                      </label>
+                    </div>
+                    {errors.payment && (
+                      <p className="text-xs text-rose-500 flex items-center gap-1">
+                        <AlertCircle size={12} /> {errors.payment}
+                      </p>
+                    )}
+                  </div>
+
+                  <hr className="border-slate-100" />
+
+                  {/* Return Policy */}
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-2.5 cursor-pointer text-sm font-semibold text-slate-800">
+                      <input
+                        type="checkbox"
+                        name="isReturnable"
+                        checked={formData.isReturnable}
+                        onChange={handleChange}
+                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                      />
+                      Product is Returnable
+                    </label>
+
+                    {formData.isReturnable && (
+                      <div className="pl-6 space-y-4 border-l-2 border-indigo-100">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 mb-1">
+                            Return Period (Days)
+                          </label>
+                          <input
+                            type="number"
+                            name="returnDays"
+                            value={formData.returnDays}
+                            onChange={handleChange}
+                            className="w-32 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-600"
+                          />
+                          {errors.returnDays && (
+                            <p className="mt-1 text-xs text-rose-500">{errors.returnDays}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 mb-1">
+                            Policy Details
+                          </label>
+                          <textarea
+                            name="policyText"
+                            value={formData.policyText}
+                            onChange={handleChange}
+                            rows={2}
+                            className="w-full p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-600"
+                          />
+                          {errors.policyText && (
+                            <p className="mt-1 text-xs text-rose-500">{errors.policyText}</p>
                           )}
                         </div>
                       </div>
                     )}
-
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
-                        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                          <ClipboardList size={18} />
-                          Payment Options
-                        </h3>
-
-                        <label className="flex items-center gap-3 mb-3 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name="cod"
-                            checked={formData.cod}
-                            onChange={handleChange}
-                          />
-                          <span>Cash on Delivery</span>
-                        </label>
-
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name="online"
-                            checked={formData.online}
-                            onChange={handleChange}
-                          />
-                          <span>Online Payment</span>
-                        </label>
-
-                        {errors.payment && (
-                          <p className="mt-3 text-sm text-red-500 flex items-center gap-1">
-                            <AlertCircle size={14} />
-                            {errors.payment}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
-                        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                          <RotateCcw size={18} />
-                          Return Policy
-                        </h3>
-
-                        <label className="flex items-center gap-3 mb-4 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name="isReturnable"
-                            checked={formData.isReturnable}
-                            onChange={handleChange}
-                          />
-                          <span>Return Available</span>
-                        </label>
-
-                        {formData.isReturnable ? (
-                          <div className="space-y-3">
-                            <div>
-                              <input
-                                type="number"
-                                name="returnDays"
-                                value={formData.returnDays}
-                                onChange={handleChange}
-                                placeholder="Return days"
-                                className="w-full px-4 py-3 rounded-xl border border-slate-300 outline-none focus:border-emerald-500"
-                              />
-                              {errors.returnDays && (
-                                <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                                  <AlertCircle size={14} />
-                                  {errors.returnDays}
-                                </p>
-                              )}
-                            </div>
-
-                            <div>
-                              <textarea
-                                name="policyText"
-                                value={formData.policyText}
-                                onChange={handleChange}
-                                placeholder="Return policy text"
-                                rows={3}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-300 outline-none resize-none focus:border-emerald-500"
-                              />
-                              {errors.policyText && (
-                                <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                                  <AlertCircle size={14} />
-                                  {errors.policyText}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-slate-500">
-                            This product is non-returnable.
-                          </p>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
             </form>
           </div>
 
-          <div className="col-span-4 space-y-6">
-            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden sticky top-28">
-
-
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Eye size={18} className="text-violet-500" />
-                  <h3 className="font-bold text-slate-800">
-                    Live Preview
-                  </h3>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`text-sm font-semibold ${formData.isActive
-                        ? "text-green-600"
-                        : "text-red-600"
-                      }`}
-                  >
-                    {formData.isActive ? "Active" : "InActive"}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        isActive: !prev.isActive,
-                      }))
-                    }
-                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${formData.isActive
-                        ? "bg-green-500"
-                        : "bg-gray-300"
-                      }`}
-                  >
-                    <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${formData.isActive
-                          ? "translate-x-8"
-                          : "translate-x-1"
-                        }`}
-                    />
-                  </button>
-                </div>
+          {/* Sidebar - Live Preview Panel */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sticky top-24">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <Layers size={16} className="text-indigo-600" />
+                  Live Preview
+                </h3>
+                <span className="text-xs text-slate-400">Card View</span>
               </div>
 
-              <div className="p-6">
-                <div className="aspect-square rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 mb-6 overflow-hidden">
+              {/* Product Card Preview */}
+              <div className="rounded-xl border border-slate-200 overflow-hidden bg-white hover:shadow-md transition">
+                <div className="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center">
                   {previewImageSrc ? (
                     <img
                       src={previewImageSrc}
-                      className="w-full h-full object-cover"
                       alt="Preview"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src =
-                          "https://via.placeholder.com/400?text=No+Image";
-                      }}
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon size={48} className="text-slate-300" />
-                    </div>
+                    <Package size={36} className="text-slate-300" />
                   )}
-                </div>
 
-                <div className="space-y-4">
-                  {formData.category && (
-                    <span
-                      className={`inline-block px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r ${getCategoryInfo(formData.category)?.color
-                        } text-white`}
-                    >
-                      {getCategoryInfo(formData.category)?.icon}{" "}
-                      {getCategoryInfo(formData.category)?.label}
+                  {calculateDiscount() !== "0" && (
+                    <span className="absolute top-2 left-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+                      -{calculateDiscount()}%
                     </span>
                   )}
+                </div>
 
-                  <h4 className="text-xl font-bold text-slate-800">
-                    {formData.title || <span className="text-slate-300">Product Title</span>}
+                <div className="p-4 space-y-2">
+                  <span className="text-[11px] font-semibold text-indigo-600 uppercase tracking-wider">
+                    {selectedCategory?.label || "Category"}
+                      
+                  </span>
+                  <h4 className="text-sm font-bold text-slate-900 line-clamp-1">
+                    {formData.title || "Product Title"}
                   </h4>
-
-                  <p className="text-slate-500 text-sm line-clamp-2">
-                    {formData.description || "Product description will appear here..."}
+                  <p className="text-xs text-slate-500 line-clamp-2">
+                    {formData.description || "Product description preview..."}
                   </p>
 
-                  <div className="pt-4 border-t border-slate-100">
-                    {formData.price ? (
-                      <div className="flex items-baseline gap-2">
-                        {formData.discountPrice &&
-                          parseFloat(formData.discountPrice) < parseFloat(formData.price) ? (
-                          <>
-                            <span className="text-2xl font-bold text-emerald-600">
-                              Rs {formData.discountPrice}
-                            </span>
-                            <span className="text-lg text-slate-400 line-through">
-                              Rs {formData.price}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-2xl font-bold text-slate-800">
-                            Rs {formData.price}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-2xl font-bold text-slate-300">Rs 0.00</span>
+                  <div className="pt-2 flex items-baseline gap-2 border-t border-slate-100">
+                    <span className="text-base font-bold text-slate-900">
+                      ${formData.discountPrice || formData.price || "0.00"}
+                    </span>
+                    {formData.discountPrice && formData.price && (
+                      <span className="text-xs text-slate-400 line-through">
+                        ${formData.price}
+                      </span>
                     )}
                   </div>
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <Layers size={16} className="text-slate-400" />
-                    <span className="text-slate-600">{formData.stock || "0"} in stock</span>
-                  </div>
-
-                  <div className="flex justify-between items-start py-2 border-b border-slate-100">
-                    <span className="text-sm text-slate-500">Payment Options</span>
-                    <div className="flex flex-col items-end gap-1">
-                      <span
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${formData.cod ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                          }`}
-                      >
-                        COD: {formData.cod ? "Available" : "Not Available"}
-                      </span>
-
-                      <span
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${formData.online
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-red-100 text-red-700"
-                          }`}
-                      >
-                        Online: {formData.online ? "Available" : "Not Available"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-start py-2 border-b border-slate-100">
-                    <span className="text-sm text-slate-500">Return Policy</span>
-                    <div className="flex flex-col items-end gap-1">
-                      <span
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${formData.isReturnable
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                          }`}
-                      >
-                        Returnable: {formData.isReturnable ? "Yes" : "No"}
-                      </span>
-
-                      <span
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${formData.isReturnable
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-red-100 text-red-700"
-                          }`}
-                      >
-                        Return Days: {formData.isReturnable ? formData.returnDays : "Not Available"}
-                      </span>
-
-                      <span
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${formData.isReturnable
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-red-100 text-red-700"
-                          }`}
-                      >
-                        Policy Text: {formData.isReturnable ? formData.policyText : "Not Available"}
-                      </span>
-                    </div>
-                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-6">
-              <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <Zap size={18} className="text-amber-500" />
-                Quick Stats
-              </h3>
-
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                  <span className="text-slate-500">Images</span>
-                  <span className="font-semibold text-slate-800">
-                    {existingImages.length + formData.images.length}
-                  </span>
+              {/* Status Switcher Box */}
+              <div className="mt-5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">Visibility Status</p>
+                  <p className="text-[11px] text-slate-500">
+                    {formData.isActive ? "Visible in store catalog" : "Hidden from customers"}
+                  </p>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                  <span className="text-slate-500">Stock</span>
-                  <span
-                    className={`font-semibold ${parseInt(formData.stock || "0") > 10
-                        ? "text-emerald-600"
-                        : parseInt(formData.stock || "0") > 0
-                          ? "text-amber-600"
-                          : "text-red-600"
-                      }`}
-                  >
-                    {formData.stock || "0"} units
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-slate-500">Discount</span>
-                  <span className="font-semibold text-emerald-600">
-                    {calculateDiscount()}% OFF
-                  </span>
-                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={formData.isActive}
+                    onChange={handleChange}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
               </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-3xl border-2 border-red-100 p-6">
-              <h3 className="font-bold text-red-800 mb-3 flex items-center gap-2">
-                <Shield size={18} className="text-red-500" />
-                Danger Zone
-              </h3>
-              <p className="text-sm text-red-600/70 mb-4">
-                Permanently delete this product. This cannot be undone.
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(true)}
-                className="w-full py-3 rounded-2xl border-2 border-red-200 text-red-600 font-semibold hover:bg-red-100 transition flex items-center justify-center gap-2"
-              >
-                <Trash2 size={18} />
-                Delete Product
-              </button>
             </div>
           </div>
         </div>

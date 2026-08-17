@@ -22,10 +22,11 @@ export interface Payload {
   panNumber: string;
   rejectionReason: string;
   status:"Pending" | "Approved" | "Rejected";
-   role:"Admin" | "SuperAdmin";
+  role:"Admin" | "SuperAdmin";
   KYCVerified: boolean ;
   accountMode: boolean;
   vacationMode: boolean;
+  hideOutOfStock: boolean;
   createdAt: string;
   updatedAt: string;
 }
