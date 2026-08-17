@@ -124,7 +124,9 @@ export default function Inventory() {
     };
 
     const handleDelete = async (id: string, title: string) => {
-        // if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
+        if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
+              return;
+        }
         const loadingToast = toast.loading("Deleting product...");
         try {
             await deleteProduct(id).unwrap();

@@ -111,6 +111,7 @@ export default function SellerRegisterImproved() {
         status: "Pending",
         KYCVerified: false,
         accountMode: false,
+        hideOutOfStock:false,
         vacationMode: false,
         rejectionReason: "",
         //  documents: {
@@ -179,6 +180,7 @@ export default function SellerRegisterImproved() {
                 KYCVerified: false,
                 accountMode: true,
                 vacationMode: false,
+                hideOutOfStock:false,
                 rejectionReason: "",
                 // documents: {
                 //     panCard: null,

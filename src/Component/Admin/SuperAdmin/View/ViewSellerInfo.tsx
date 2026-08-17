@@ -15,7 +15,7 @@ export default function ViewSellerInfo() {
 
 
 const { id } = useParams();
-    const { data, isLoading, error, refetch } = useGetUserByIdQuery(id);
+    const { data, isLoading, refetch } = useGetUserByIdQuery(id);
     const [updateAdmin,] = useUpdateAdminMutation();
 
 

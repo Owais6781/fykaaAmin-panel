@@ -10,8 +10,8 @@ import type { Payload } from "./Payload";
 
 
 interface Props {
-  formData: Payload;
-  handleChange: (e:React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    formData: Payload;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
 }
 
 
@@ -34,7 +34,7 @@ const inputClassName =
          hover:border-indigo-300 
         `
 
-        
+
 const businessTypeOptions = [
     "Pending",
     "Approved",
@@ -43,10 +43,10 @@ const businessTypeOptions = [
 ];
 
 export default function ProfileInformation({
-  formData,
-  handleChange,
+    formData,
+    handleChange,
 }: Props) {
-  return (
+    return (
         <SettingsCard
             rightIcon={<UserCircle2 className="text-indigo-600" />}
             leftIcon={""}
@@ -92,7 +92,7 @@ export default function ProfileInformation({
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                   options={businessTypeOptions}
+                    options={businessTypeOptions}
 
                 />
                 <InputField
@@ -114,9 +114,12 @@ export default function ProfileInformation({
             </div>
 
             <div className="mt-0">
-                <UploadField />
+                <UploadField
+                    onChange={() => {
+                        console.log("File changed");
+                    }} />
             </div>
-         
+
         </SettingsCard>
 
 

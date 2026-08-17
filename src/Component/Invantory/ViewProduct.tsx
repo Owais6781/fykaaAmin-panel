@@ -1,9 +1,10 @@
 
 import React, { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Package,
-  AlertCircle,
+
   ArrowLeft,
   Edit3,
   Eye,
@@ -11,21 +12,19 @@ import {
   ChevronRight,
   ZoomIn,
   X,
-  TrendingUp,
-  Copy,
-  ExternalLink,
+
   BarChart3,
   ShoppingBag,
   DollarSign,
-  CheckCircle2,
+
   XCircle,
-  AlertTriangle,
+
   RefreshCw,
-  Printer,
+
   History,
   Layers,
-  Calendar,
-  Layers3,
+  Copy,
+  Check,
 } from "lucide-react";
 
 import {
@@ -43,7 +42,7 @@ import { useGetMyOrdersQuery } from "../../api/orderApi";
 
 type ProductFromApi = {
   _id: string;
- category: {
+  category: {
     _id: string;
     name: string;
     slug: string;
@@ -76,7 +75,7 @@ type ProductFromApi = {
 const ViewProduct: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-
+const [copied, setCopied] = useState(false);
   const Api = import.meta.env.VITE_API_URL as string;
 
   const { data, isLoading, isError, error, refetch } = useGetViewQuery(id!, {
@@ -148,10 +147,20 @@ const ViewProduct: React.FC = () => {
     };
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
+ const copyToClipboard = async (id: string) => {
+  try {
+    await navigator.clipboard.writeText(id);
+    setCopied(true);
 
+  toast.success(`Product ID copied: ${id}`);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 1500);
+  } catch (error) {
+    toast.error("Failed to copy Product ID");
+  }
+};
   const nextImage = () => {
     setSelectedImageIndex((prev) =>
       prev < existingImages.length - 1 ? prev + 1 : 0
@@ -212,7 +221,7 @@ const ViewProduct: React.FC = () => {
 
   productOrders.forEach((order: any) => {
 
-     if (order.orderStatus !== "Delivered") return;
+    if (order.orderStatus !== "Delivered") return;
     const date = new Date(order.createdAt).toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
@@ -380,6 +389,13 @@ const ViewProduct: React.FC = () => {
                 <span className="font-mono text-xs text-slate-400">
                   ID: {product._id}
                 </span>
+                <button
+                  onClick={() => copyToClipboard(product._id)}
+                  title="Copy"
+                   className="cursor-pointer"
+                >
+                 {copied ? <Check size={18} /> : <Copy size={18} />}
+                </button>
               </p>
             </div>
           </div>
@@ -484,7 +500,7 @@ const ViewProduct: React.FC = () => {
                       }}
                     />
                   ) : null}
-                 
+
                 </div>
 
                 <div className="space-y-3">
@@ -520,6 +536,7 @@ const ViewProduct: React.FC = () => {
                     <span className="text-slate-500">Category:</span>
                     <span className="font-medium text-slate-900">
                       {product.category?.name || "N/A"}
+
                     </span>
                   </div>
                   <div className="flex justify-between">

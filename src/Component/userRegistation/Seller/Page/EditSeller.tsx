@@ -31,6 +31,7 @@ export default function EditSeller() {
         status: "Pending",
           KYCVerified:false,
         vacationMode: false,
+        hideOutOfStock: false,
         accountMode: true,
         rejectionReason: "",
 

@@ -25,7 +25,7 @@ export interface Admin {
   KYCVerified: boolean;
   accountMode: boolean;
   vacationMode: boolean;
-   hideOutOfStock: boolean;
+  hideOutOfStock: boolean;
   rejectionReason: string;
 
 
